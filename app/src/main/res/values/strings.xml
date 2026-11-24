@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">CleanSweep</string>
+
+    <!-- Temporary Phase 1 bootstrap screen. Replaced by the real onboarding/dashboard in Phase 4. -->
+    <string name="bootstrap_subtitle">Data layer ready</string>
+    <string name="bootstrap_stat_indexed_files">Indexed files</string>
+    <string name="bootstrap_stat_whitelist_rules">Whitelist rules</string>
+    <string name="bootstrap_stat_trash_entries">Safe Trash entries</string>
+    <string name="bootstrap_stat_safe_to_clean">Safe to Clean</string>
+    <string name="bootstrap_stat_review_recommended">Review Recommended</string>
+    <plurals name="bootstrap_category_row">
+        <item quantity="one">%1$s: %2$d file</item>
+        <item quantity="other">%1$s: %2$d files</item>
+    </plurals>
+</resources>

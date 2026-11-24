@@ -1,0 +1,5 @@
+# Line endings are fixed by the repository, not by each contributor's git config:
+# text files are stored and checked out with LF everywhere, so scripts such as gradlew work on any system.
+* text=auto eol=lf
+# Windows batch files need CRLF.
+*.bat text eol=crlf

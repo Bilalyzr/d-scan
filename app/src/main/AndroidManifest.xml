@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!--
+      Storage access, by Android version (PRD section 3, minimum Android 10 / API 29):
+
+      - Android 10 (API 29) has neither scoped storage nor All Files Access. It uses the legacy storage model,
+        which needs these runtime permissions plus android:requestLegacyExternalStorage on <application>.
+      - Android 11+ (API 30+) grants broad access through MANAGE_EXTERNAL_STORAGE (All Files Access), which the
+        user approves in system settings. The legacy permissions are capped so they are never requested there.
+    -->
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="29" />
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="29" />
+    <uses-permission
+        android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
+        tools:ignore="ScopedStorage" />
+
+    <!--
+      Privacy guarantee (PRD section 7): CleanSweep is 100% on-device. The manifest merger strips INTERNET even if a
+      future dependency declares it, so no code path in this app can open a network socket.
+      ManifestPrivacyTest fails the build if INTERNET ever reaches the packaged manifest.
+    -->
+    <uses-permission
+        android:name="android.permission.INTERNET"
+        tools:node="remove" />
+
+    <!--
+      Backup is off on purpose. The file index, whitelist and trash manifest describe the user's files, and a
+      backup would copy them off the device: into the user's cloud backup, or onto their next phone.
+      - Android 11 and lower: allowBackup="false" switches every form of backup off. backup_rules.xml states the
+        same exclusions explicitly.
+      - Android 12 and newer: cloud backup and device-to-device transfer follow dataExtractionRules instead, and a
+        mode without rules is fully enabled. data_extraction_rules.xml excludes every storage domain from both.
+      The index is rebuildable from a scan, and Safe Trash contents are device-local by nature.
+    -->
+    <application
+        android:name=".CleanSweepApp"
+        android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:requestLegacyExternalStorage="true"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.CleanSweep">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!--
+          WorkManager is created on demand by CleanSweepApp through the HiltWorkerFactory, so background workers
+          can take @Inject dependencies. This removes WorkManager's default androidx.startup initializer.
+        -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                android:value="androidx.startup"
+                tools:node="remove" />
+        </provider>
+    </application>
+</manifest>
