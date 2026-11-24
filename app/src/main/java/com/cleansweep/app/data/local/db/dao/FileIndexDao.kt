@@ -154,6 +154,30 @@ interface FileIndexDao {
 
     // ---- Dashboard aggregates ----
 
+    /**
+     * The only rows a junk detector can report: empty-folder placeholders, zero-byte files, files at or above
+     * [largeFileThresholdBytes], files with one of [junkExtensions] (lowercase), and anything inside a
+     * `.thumbnails` folder. Everything else is never loaded, which keeps junk detection cheap on a large index.
+     */
+    @Query(
+        """
+        SELECT * FROM file_index
+        WHERE is_directory = 1
+           OR size_bytes = 0
+           OR size_bytes >= :largeFileThresholdBytes
+           OR extension IN (:junkExtensions)
+           OR instr(path, '/.thumbnails/') > 0
+        """,
+    )
+    suspend fun getJunkCandidates(
+        largeFileThresholdBytes: Long,
+        junkExtensions: Collection<String>,
+    ): List<FileIndexEntity>
+
+    /** Callers keep each chunk of [paths] within [com.cleansweep.app.data.local.db.MAX_BIND_ARGS_PER_QUERY]. */
+    @Query("DELETE FROM file_index WHERE path IN (:paths)")
+    suspend fun deleteByPaths(paths: Collection<String>): Int
+
     @Query("SELECT COUNT(*) FROM file_index WHERE is_directory = 0")
     fun observeFileCount(): Flow<Int>
 

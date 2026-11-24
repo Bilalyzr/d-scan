@@ -2,10 +2,13 @@ package com.cleansweep.app.data.local.db
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.cleansweep.app.data.local.db.dao.FileIndexDao
+import com.cleansweep.app.data.local.db.entity.SuggestionItemEntity
 import com.cleansweep.app.data.mapper.toDomain
 import com.cleansweep.app.data.mapper.toEntity
 import com.cleansweep.app.domain.model.FileCategory
 import com.cleansweep.app.domain.model.IndexedFile
+import com.cleansweep.app.domain.model.ReasonCode
+import com.cleansweep.app.domain.model.SuggestionCategory
 import com.cleansweep.app.domain.util.StoragePaths
 import com.cleansweep.app.file
 import com.cleansweep.app.folder
@@ -291,6 +294,51 @@ class FileIndexDaoTest {
         assertEquals(setOf(FileCategory.DOCUMENT, FileCategory.IMAGE), totals.keys)
         assertEquals(2, totals.getValue(FileCategory.DOCUMENT).fileCount)
         assertEquals(25L, totals.getValue(FileCategory.DOCUMENT).totalBytes)
+    }
+
+    @Test
+    fun `junk candidates are exactly the rows a junk detector could report`() = runTest {
+        insert(
+            file("/r/ordinary.bin", sizeBytes = 100L),
+            file("/r/empty.dat", sizeBytes = 0L),
+            file("/r/big.bin", sizeBytes = 1_000L),
+            file("/r/almost-big.bin", sizeBytes = 999L),
+            file("/r/notes.log", sizeBytes = 10L),
+            file("/r/app.apk", sizeBytes = 10L),
+            file("/r/keep.pdf", sizeBytes = 10L),
+            file("/r/DCIM/.thumbnails/thumb1", sizeBytes = 10L),
+            folder("/r/Empty"),
+        )
+
+        val paths = dao
+            .getJunkCandidates(largeFileThresholdBytes = 1_000L, junkExtensions = listOf("log", "apk"))
+            .map { it.path }
+            .toSet()
+
+        assertEquals(
+            setOf("/r/empty.dat", "/r/big.bin", "/r/notes.log", "/r/app.apk", "/r/DCIM/.thumbnails/thumb1", "/r/Empty"),
+            paths,
+        )
+    }
+
+    @Test
+    fun `removing files by path takes their suggestions with them`() = runTest {
+        val (kept, removed) = insert(file("/r/keep.bin"), file("/r/gone.bin"))
+        database.suggestionItemDao().upsertAll(
+            listOf(
+                SuggestionItemEntity(kept, SuggestionCategory.ZERO_BYTE, 90, ReasonCode.ZERO_BYTE, "ZERO_BYTE", false),
+                SuggestionItemEntity(removed, SuggestionCategory.ZERO_BYTE, 90, ReasonCode.ZERO_BYTE, "ZERO_BYTE", false),
+            ),
+        )
+
+        assertEquals(1, dao.deleteByPaths(listOf("/r/gone.bin")))
+
+        assertGone("/r/gone.bin")
+        assertIndexed("/r/keep.bin")
+        assertEquals(
+            listOf(kept),
+            database.suggestionItemDao().observeWithFile(category = null, includeDismissed = true).first().map { it.suggestion.fileId },
+        )
     }
 
     @Test

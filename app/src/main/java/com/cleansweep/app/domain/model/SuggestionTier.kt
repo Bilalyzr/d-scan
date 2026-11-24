@@ -8,10 +8,11 @@ package com.cleansweep.app.domain.model
  */
 enum class SuggestionTier(
     val minScore: Int,
+    val maxScore: Int,
 ) {
-    SAFE_TO_CLEAN(80),
-    REVIEW_RECOMMENDED(50),
-    KEEP(0),
+    SAFE_TO_CLEAN(80, 100),
+    REVIEW_RECOMMENDED(50, 79),
+    KEEP(0, 49),
     ;
 
     companion object {

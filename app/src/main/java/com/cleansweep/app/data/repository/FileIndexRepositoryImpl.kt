@@ -150,6 +150,18 @@ class FileIndexRepositoryImpl @Inject constructor(
             rows.map { CategoryTotal(it.category, it.fileCount, it.totalBytes) }
         }
 
+    override suspend fun getJunkCandidates(
+        largeFileThresholdBytes: Long,
+        junkExtensions: Collection<String>,
+    ): List<IndexedFile> =
+        fileIndexDao.getJunkCandidates(largeFileThresholdBytes, junkExtensions).map(FileIndexEntity::toDomain)
+
+    override suspend fun removeFiles(paths: Collection<String>) {
+        database.withTransaction {
+            paths.distinct().chunked(MAX_BIND_ARGS_PER_QUERY).forEach { fileIndexDao.deleteByPaths(it) }
+        }
+    }
+
     override suspend fun clearIndex() {
         fileIndexDao.deleteAll()
     }

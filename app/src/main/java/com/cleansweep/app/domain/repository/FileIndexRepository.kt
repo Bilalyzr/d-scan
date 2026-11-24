@@ -99,6 +99,21 @@ interface FileIndexRepository {
 
     fun observeCategoryTotals(): Flow<List<CategoryTotal>>
 
+    // ---- Junk detection ----
+
+    /**
+     * The only rows a junk detector can report: empty-folder placeholders, zero-byte files, files at or above
+     * [largeFileThresholdBytes], files with one of [junkExtensions] (lowercase), and anything inside a
+     * `.thumbnails` folder. Hidden entries are included; the caller decides what may be suggested.
+     */
+    suspend fun getJunkCandidates(
+        largeFileThresholdBytes: Long,
+        junkExtensions: Collection<String>,
+    ): List<IndexedFile>
+
+    /** Removes files that no longer exist, for example because a volume was ejected during a scan. */
+    suspend fun removeFiles(paths: Collection<String>)
+
     /** Removes the whole index, suggestions included. Whitelist rules and the trash manifest are untouched. */
     suspend fun clearIndex()
 }
