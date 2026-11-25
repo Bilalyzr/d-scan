@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Screen 3: the progress screen of a running scan -->
     <string name="scan_title">Scan</string>
     <string name="scan_running_title">Scanning</string>
@@ -10,7 +10,8 @@
     <string name="scan_phase_analysing">Putting together suggestions</string>
     <string name="scan_paused">Paused</string>
     <string name="scan_percent">%1$d%%</string>
-    <string name="scan_stage_description">%1$s: %2$d of %3$d files done</string>
+    <!-- "1 of 1 done" reads as well as "30 of 80 done", so this is not a plural. -->
+    <string name="scan_stage_description" tools:ignore="PluralsCandidate">%1$s: %2$d of %3$d done</string>
 
     <string name="scan_files_scanned">%1$s so far</string>
     <string name="scan_size_scanned">%1$s in total</string>

@@ -48,8 +48,6 @@
     <string name="hub_row_review_tag">Review</string>
     <string name="hub_row_ignored_tag">Ignored</string>
     <string name="hub_row_preview">Preview</string>
-    <string name="hub_row_mark">Mark for deletion</string>
-    <string name="hub_row_unmark">Do not mark for deletion</string>
     <string name="hub_row_more">More actions</string>
     <string name="hub_row_see_copies">See all copies</string>
     <string name="hub_row_ignore">Ignore this suggestion</string>
@@ -68,7 +66,6 @@
         <item quantity="one">1 selected</item>
         <item quantity="other">%1$s selected</item>
     </plurals>
-    <string name="hub_move_to_trash">Move to Trash</string>
     <string name="hub_move_to_trash_sized">Move to Trash (%1$s)</string>
 
     <!-- What came of an action -->

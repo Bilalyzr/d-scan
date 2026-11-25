@@ -1,7 +1,6 @@
 package com.cleansweep.app
 
 import android.content.res.Configuration
-import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -9,6 +8,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.getValue
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.drawable.toDrawable
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cleansweep.app.domain.repository.SettingsRepository
@@ -58,7 +58,7 @@ class MainActivity : ComponentActivity() {
     private fun paintWindowBackground() {
         val theme = runBlocking { withTimeoutOrNull(200L) { settings.current().themeMode } }
         val color = if (theme.isDark(systemIsDark())) R.color.window_background_dark else R.color.window_background
-        window.setBackgroundDrawable(ColorDrawable(ContextCompat.getColor(this, color)))
+        window.setBackgroundDrawable(ContextCompat.getColor(this, color).toDrawable())
     }
 
     private fun systemIsDark(): Boolean =

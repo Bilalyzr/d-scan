@@ -2,10 +2,6 @@
 <resources>
     <!-- Screen 5: one group of identical files -->
     <string name="group_title">Identical files</string>
-    <plurals name="group_copies">
-        <item quantity="one">%1$s copy</item>
-        <item quantity="other">%1$s copies</item>
-    </plurals>
     <string name="group_reclaim">%1$s can be freed</string>
     <string name="group_size_line">%1$s · %2$s each</string>
     <string name="group_every_copy_kept">Every copy is kept. Keep another copy instead to offer this one.</string>
@@ -27,7 +23,6 @@
     <string name="group_more">More actions</string>
     <string name="group_ignore">Ignore the suggestion for this copy</string>
     <string name="group_unignore">Stop ignoring this copy</string>
-    <string name="group_mark">Mark this copy for deletion</string>
     <string name="group_original_hint">Kept by the group\'s rule. Keep another copy to offer this one.</string>
     <string name="group_kept_hint">Kept by you. It stays, whatever the rule would pick.</string>
 
@@ -36,14 +31,9 @@
     <string name="file_modified">Modified</string>
     <string name="file_created">Created</string>
     <string name="file_created_unknown">not known</string>
-    <string name="file_folder">Folder</string>
     <string name="file_copied">Copied</string>
     <string name="file_copy_path">Copy the path</string>
 
-    <plurals name="group_selected">
-        <item quantity="one">1 selected</item>
-        <item quantity="other">%1$s selected</item>
-    </plurals>
 
     <!-- What came of an action on the group -->
     <string name="group_msg_kept">This copy is kept now. The copy that was kept until then is offered.</string>

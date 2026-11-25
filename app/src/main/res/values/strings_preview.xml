@@ -4,7 +4,6 @@
     <string name="preview_title">Preview</string>
     <string name="preview_close">Close the preview</string>
 
-    <string name="preview_loading">Opening the file</string>
     <string name="preview_failed_title">This file cannot be shown</string>
     <string name="preview_failed_text">It may be damaged, or still being written. The file itself is not touched.</string>
     <string name="preview_none_title">No preview for this kind of file</string>

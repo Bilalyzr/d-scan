@@ -3,6 +3,7 @@ package com.cleansweep.app.ui.preview
 import android.graphics.Bitmap
 import android.graphics.pdf.PdfRenderer
 import android.os.ParcelFileDescriptor
+import androidx.core.graphics.createBitmap
 import java.io.File
 
 /** Draws the first pages of a PDF into pictures. The platform's own renderer: nothing is sent anywhere. */
@@ -38,7 +39,7 @@ class PdfPages {
         targetWidth: Int,
     ): Bitmap = renderer.openPage(index).use { page ->
         val scale = targetWidth.toFloat() / page.width
-        val bitmap = Bitmap.createBitmap(
+        val bitmap = createBitmap(
             (page.width * scale).toInt().coerceAtLeast(1),
             (page.height * scale).toInt().coerceAtLeast(1),
             Bitmap.Config.ARGB_8888,

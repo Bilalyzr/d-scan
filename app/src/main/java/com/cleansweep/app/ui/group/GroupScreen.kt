@@ -54,7 +54,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboard
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -132,7 +132,8 @@ private fun Messages(
     viewModel: GroupViewModel,
     messages: SnackbarHostState,
 ) {
-    val resources = LocalContext.current.resources
+    // Through LocalResources, so that a message follows a change of language.
+    val resources = LocalResources.current
     LaunchedEffect(viewModel, messages, resources) {
         viewModel.eventFlow.collect { event ->
             val undo = resources.getString(R.string.hub_msg_undo)

@@ -5,8 +5,11 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
+import android.os.Build
 import android.net.Uri
 import android.provider.Settings
+import androidx.annotation.RequiresApi
+import androidx.core.net.toUri
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -48,19 +51,22 @@ fun Context.findActivity(): Activity? {
 }
 
 /**
- * Opens the system page where All Files Access is turned on (Android 11 and newer). The page for this one app is
- * tried first; not every device has it, so the general page comes next, and the app's own settings page last.
+ * Opens the system page where All Files Access is turned on. The page for this one app is tried first; not every
+ * device has it, so the general page comes next, and the app's own settings page last.
+ *
+ * From Android 11 only: before that there is no such page, and Android 10 is asked with its permission dialog
+ * (see the onboarding screen).
  *
  * @return false when the device has none of these pages, so the caller can say so instead of failing silently.
  */
+@RequiresApi(Build.VERSION_CODES.R)
 fun openAllFilesAccessSettings(
     context: Context,
 ): Boolean {
-    val packageUri = Uri.fromParts("package", context.packageName, null)
     val attempts = listOf(
-        Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, Uri.parse("package:${context.packageName}")),
+        Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, "package:${context.packageName}".toUri()),
         Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION),
-        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, packageUri),
+        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null)),
     )
     for (intent in attempts) {
         try {

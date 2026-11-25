@@ -53,6 +53,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -110,7 +111,8 @@ private fun Messages(
     viewModel: PreviewViewModel,
     messages: SnackbarHostState,
 ) {
-    val resources = LocalContext.current.resources
+    // Through LocalResources, so that a message follows a change of language.
+    val resources = LocalResources.current
     LaunchedEffect(viewModel, messages, resources) {
         viewModel.eventFlow.collect { event ->
             val undo = resources.getString(R.string.hub_msg_undo)

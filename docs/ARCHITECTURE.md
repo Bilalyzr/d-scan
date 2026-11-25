@@ -3,14 +3,15 @@
 CleanSweep is an offline-first Android app that scans device storage, finds exact duplicates and junk, and
 explains why each file is safe to delete. Nothing ever leaves the device.
 
-This document records the decisions behind the code and which layer enforces which rule. It is written for the
-engineers picking up Phase 4. Source of truth for product behaviour is the PRD; this file only explains how the
-code implements it and where it deliberately deviates.
+This document records the decisions behind the code and which layer enforces which rule. Source of truth for
+product behaviour is the PRD; this file only explains how the code implements it and where it deliberately
+deviates.
 
-**State:** Phase 1 (foundation and data layer), Phase 2 (scanning engine) and Phase 3 (Safe Trash and whitelist)
-are built and tested on the JVM. Nothing has been run on an Android device yet: no device or emulator was
-available. Phase 4 (the eight screens) is not started, so nothing can be started from the app's UI: no scan, no
-trashing, no restore.
+**State:** all four phases are built: the foundation and data layer, the scanning engine, Safe Trash and the
+whitelist, and the eight screens. Everything is tested on the JVM. Nothing has been run on an Android device
+yet: no device or emulator was available. The screens are drawn by Robolectric in the unit tests and the
+pictures are looked at, which shows layout and wording; it does not show what only a device has, such as the
+system's permission pages, the video player or PDF pages.
 
 ## 1. Shape of the project
 
@@ -18,10 +19,15 @@ One Gradle module, `:app`, split by layer.
 
 ```
 app/src/main/java/com/cleansweep/app/
-├── CleanSweepApp.kt              @HiltAndroidApp, on-demand WorkManager through HiltWorkerFactory
-├── MainActivity.kt               single-activity host
-├── di/                           Hilt modules: Room, DataStore, Clock, coroutines, scanner, trash, repository bindings
-├── ui/                           Material 3 theme and the temporary bootstrap screen; the eight screens are Phase 4
+├── CleanSweepApp.kt              @HiltAndroidApp; on-demand WorkManager, the start-up check of the trash, the background scan
+├── MainActivity.kt               single-activity host; applies the theme setting before the first frame
+├── di/                           Hilt modules: Room, DataStore, Clock, coroutines, scanner, trash, preview, clean, repositories
+├── ui/                           the eight screens (section 7), one package per screen, each with its ViewModel
+│   ├── navigation/               routes and the navigation graph, the tab bar, the activity's ViewModel
+│   ├── onboarding/, home/, scan/, suggestions/, group/, preview/, trash/, settings/
+│   ├── clean/                    shared by the hub and a group: marking, the confirmation sheet, the bar, the wording
+│   ├── common/                   drawn icons, formatting, notices, paths as people name them
+│   └── theme/                    Material 3 theme from the PRD colours, dynamic palette on Android 12+
 ├── domain/                       plain Kotlin: no Android, no Hilt
 │   ├── model/                    IndexedFile, Suggestion, WhitelistRule, TrashEntry, enums, policy
 │   ├── repository/               repository interfaces
@@ -34,11 +40,15 @@ app/src/main/java/com/cleansweep/app/
 │       ├── PauseGate.kt, HardLinkReader.kt, ScanModels.kt
 │       ├── walker/               FileWalker, FileNames, ScanExclusions, EmptyFolderRules, metadata
 │       ├── hashing/              StreamingFileHasher, HashSchemes, HashingConcurrency
-│       ├── duplicates/           DuplicatePipeline, OriginalLockPolicy, LocationHeuristics
+│       ├── duplicates/           DuplicatePipeline, OriginalLockPolicy, LocationHeuristics, AutoSelectRule,
+│       │                         DuplicateGroupEditor (keeping another copy, section 6)
 │       ├── junk/                 JunkRules and the detectors
 │       ├── scoring/              ConfidenceScorer, SuggestionEngine
-│       ├── trash/                Safe Trash (section 6): TrashManager, TrashNaming, TrashStorage, PurgeScheduler
-│       └── whitelist/            WhitelistManager
+│       ├── clean/                CleanSelection: what is marked for deletion, shared by every screen that marks
+│       ├── trash/                Safe Trash (section 6): TrashManager, SafeTrash, TrashNaming, TrashStorage, PurgeScheduler
+│       ├── whitelist/            WhitelistManager
+│       ├── ScanControl.kt        the scan service as the screens see it
+│       ├── StorageSpaceReader.kt, FolderLister.kt
 └── data/
     ├── local/db/                 Room: entities, DAOs, query projections, CleanSweepDatabase
     ├── mapper/                   entity <-> domain
@@ -168,8 +178,8 @@ Room's `@Upsert` returns the new row id for an inserted row and **-1 for an upda
 
 | Concern | Decision |
 | --- | --- |
-| Android 10 | Legacy storage model (`requestLegacyExternalStorage`) plus `READ`/`WRITE_EXTERNAL_STORAGE`, both capped at `maxSdkVersion` 29. |
-| Android 11 and newer | `MANAGE_EXTERNAL_STORAGE` (All Files Access). The prominent disclosure and the settings deep link arrive in Phase 4. |
+| Android 10 | Legacy storage model (`requestLegacyExternalStorage`) plus `READ`/`WRITE_EXTERNAL_STORAGE`, both capped at `maxSdkVersion` 29. Asked for by the system's permission dialog, again only after the disclosure; when the system will not ask again, the onboarding screen sends the user to the app's own settings page. |
+| Android 11 and newer | `MANAGE_EXTERNAL_STORAGE` (All Files Access). Asked for only after the prominent disclosure on the onboarding screen was acknowledged; the user is sent to the system page for All Files Access. |
 | Network | `INTERNET` is declared with `tools:node="remove"`, so the manifest merger strips it even if a dependency declares it. |
 | Backup | Off, by two mechanisms. `allowBackup="false"` switches off every form of backup on Android 11 and lower, and `res/xml/backup_rules.xml` states the same exclusions for that range. From Android 12 on, cloud backup and device-to-device transfer follow `res/xml/data_extraction_rules.xml` instead, and a mode without rules is fully enabled, so that file excludes every storage domain from both. Auto Backup would otherwise copy the index of the user's filenames into their cloud backup or onto their next phone. |
 | Read-only SD cards | Handled by refusing, by design and unverified on a device. A volume mounted read-only is scanned, so its duplicates are found. Trashing from it fails with `STORAGE_READ_ONLY`, and nothing on the volume is changed. The Storage Access Framework tree grant that would allow writing to such a volume is not built. |
@@ -336,8 +346,11 @@ suggestion: the strongest defining signal decides the category, and every signal
 - **Unexpected exceptions** end in `Failed(UNEXPECTED_ERROR)` with the cause attached, rather than leaving the
   state at `Running` forever.
 
-`IncrementalIndexWorker` runs a full scan in the background. It is not scheduled anywhere yet: it joins the
-periodic schedule only once the user turns background indexing on, which is part of the settings screen in Phase 4.
+`IncrementalIndexWorker` runs a full scan in the background. `BackgroundIndexingScheduler` plans it once a day
+under the name `background-index`, and only while the setting "Index in the background" is on, which it is not
+until the user turns it on. `BackgroundIndexing` applies the setting at every app start and whenever it changes;
+if the settings cannot be read, the background scan is off. The worker never runs beside a scan the user
+started: if one is running, it tries again later.
 
 ### Not built
 
@@ -463,13 +476,83 @@ rule; the files below it are scanned and suggested again from the next scan on.
 - **Trashed entries stay on shared storage**, as hidden files in their own folders. A file manager that shows
   hidden files lists them. Another app with All Files Access can remove them. Uninstalling CleanSweep leaves them
   behind, hidden and without a row, so they cannot be restored by the next install.
-- **Trashing while a scan runs** is not blocked. A scan that walked past a file just before it was trashed puts its
-  row back until the next scan. The suggestion then leads to a refusal (`GONE`), and nothing is deleted twice. The
-  UI should not offer cleaning while a scan is running.
+- **Trashing while a scan runs** is not blocked by the manager. A scan that walked past a file just before it was
+  trashed puts its row back until the next scan. The suggestion then leads to a refusal (`GONE`), and nothing is
+  deleted twice. The screens do not offer it: while a scan runs nothing can be marked or moved, and the hub and
+  the screen of a group say so.
 - **The rename on Android's shared storage is assumed to work** with All Files Access, since it is what the system
   trash does. `TrashManagerInstrumentedTest` checks it on a real device; it has never been run.
+- **Undo puts files back, it does not stop the move.** "Undo" after moving files to the trash restores them from
+  the trash, which gives them their name back or a `name (restored)` one when something else took it in the
+  meantime. It is not the same as never having moved them.
 
-## 7. Where each safety rule lives
+## 7. The screens
+
+### 7.1 How the app is put together
+
+One activity, one navigation graph (`ui/navigation`). Four screens have a tab in the bar at the bottom: the
+dashboard, the Suggestions Hub, Safe Trash and Settings. They are roots of their own: they have no back arrow,
+and the system's back button goes to the screen beneath. Onboarding, the scan progress, the screen of one group of
+duplicates and the preview are ordinary destinations.
+
+The app opens on onboarding when it may not read storage yet, and on the dashboard otherwise. A launch route
+that is replaced at once keeps the dashboard the root of the back stack.
+
+Each screen is a thin composable over a ViewModel, and each ViewModel is tested against fakes for everything it
+talks to: the repositories, the scan service (`ScanControl`), Safe Trash (`SafeTrash`), the marking
+(`CleanSelectionStore`). The composables take their state and their callbacks as plain parameters, so that the
+tests draw them without a ViewModel.
+
+What is marked for deletion lives in one place, `CleanSelection` in the domain, and is shared by the hub, the
+screen of a group and the preview. It records the exceptions rather than the whole set, so that the PRD's rule
+holds whatever the list contains: "Safe to Clean" items are ticked from the start and "Review Recommended" items
+are not, a safe item that appears after another scan starts out ticked, and one that was unticked stays so.
+
+### 7.2 The eight screens
+
+| Screen | What it does | What it never does |
+| --- | --- | --- |
+| 1. Onboarding and permissions | The privacy note and the prominent disclosure: what is read, and what for. "I understand, continue" is the only button until the disclosure was acknowledged. Then access is asked for. | Asks for the permission before the disclosure was acknowledged. A refusal has its own screen and a way back; "Not now" goes on to the dashboard, which keeps a way to allow access. |
+| 2. Home dashboard | The storage gauge, what could be freed by tier, the scan button, the breakdown of the scanned files by kind, and the state of the last scan. | Shows a gauge when no volume could be measured; it says so instead. |
+| 3. Scan progress | How far a scan is and where it is, with pause, resume and cancel. When the scan is done it goes on to the hub. | Blocks anything: leaving the screen leaves the scan going. It shows a percentage only where one exists, in the two hashing stages. |
+| 4. Suggestions Hub | Three tabs: safe to clean, review, and all duplicates. A rule to tick every group by: keep the oldest, the newest or the shortest path, or untick all. A sticky bar and a sheet that asks before anything moves. | Moves anything while a scan runs or without access to storage. Moves "Review Recommended" items without one more acknowledgement in the sheet. |
+| 5. Duplicate group | Every copy with its path, size and dates, the kept copy first; the copies side by side; "Keep this copy"; the rule to tick by, for this group. | Ticks the kept copy. A copy kept by the rule can be offered only by keeping another copy first. |
+| 6. Preview | A picture (pinch to zoom), a film or music, the first pages of a PDF, or the start of a text file, with "Keep this copy" and "Mark for deletion". | Changes the file. |
+| 7. Safe Trash | What the bin holds, with the days left for each entry; put back one or all; empty the bin. | Deletes for good without one more question that says it cannot be undone. |
+| 8. Settings and whitelist | The exclusions with a folder picker; the smallest file a scan looks at; the large-file threshold; the days before a large file is suggested; the daily background scan; the theme. | Excludes a whole storage, or a folder that is not there. |
+
+### 7.3 Decisions the screens make for the user
+
+- **"Space Reclaimed" is not shown after moving to the trash.** The PRD's happy path shows it there; Safe Trash
+  frees no space until it is emptied (section 6.8). The sheet that asks for confirmation says so before anything
+  moves, the hub says only that files were moved, and the bin shows how much emptying would free.
+- **A group keeps its copy until the user keeps another.** "Keep this copy" on a copy that is not the kept one
+  makes it the kept copy through `DuplicateGroupEditor`, and the copy that was kept until then is offered at
+  once. "Keep this copy" on any other file takes its suggestion off the list, which can be undone.
+- **The folder picker is the app's own.** It starts at the storages and goes down one folder at a time, showing
+  what the app can see with All Files Access. The system's picker returns a document URI, which does not say
+  which folder on shared storage it is; the app's own picker gives the path the whitelist needs. A single file is
+  kept from being suggested from its suggestion ("Never suggest this file again"), not from Settings.
+- **The numbers in Settings are steps.** The smallest file a scan looks at: nothing, 100 KB, 1 MB or 10 MB. The
+  large-file threshold: 50 MB to 10 GB in eight steps. The days before a large file is suggested: 30, 60, 90,
+  180 or 365. A value from somewhere else is shown on the step nearest to it. All three apply from the next scan.
+- **The theme setting covers the first frame.** The activity reads the theme once before composing, within a
+  short limit, and paints the window in the matching colour, so that the app does not flash in the other theme
+  at start.
+
+### 7.4 What the preview shows, and what it needs a device for
+
+| Kind of file | Shown by | In the tests |
+| --- | --- | --- |
+| Image | Coil, with pinch to zoom and a double tap to reset | drawn by a stand-in |
+| Video, audio | Media3's player, paused when the app goes to the background | a stand-in |
+| PDF | The first three pages, drawn by the platform's `PdfRenderer` as wide as the screen | only the failure: the renderer has no native library on the JVM |
+| Text | The first 64 KB of a file up to 1 MB with a text extension | read from a real file |
+| Anything else | Name, path, size and dates | drawn |
+
+The picture, the player and the PDF pages have never been seen running. That needs a device.
+
+## 8. Where each safety rule lives
 
 | Rule | Enforced by | Status |
 | --- | --- | --- |
@@ -479,22 +562,30 @@ rule; the files below it are scanned and suggested again from the next scan on.
 | Mandatory Original Lock | `is_original_locked`, `OriginalLockPolicy`, `SuggestionGuard`, `TrashManager` | built, tested on the JVM: when suggestions are made, and again when something is trashed |
 | 30-day Safe Trash by default | `TrashManager`, `TrashNaming`, `TrashPurgeWorker` | built, tested on the JVM |
 | Nothing is trashed on a stale suggestion | `TrashManager.trash` | built, tested on the JVM |
+| Nothing is moved without the sheet's confirmation; a look-first item needs one more tick | `SuggestionsViewModel`, `GroupViewModel`, `CleanConfirmationSheet` | built, tested as logic and as rendered screens |
+| Nothing is deleted for good without one more question | `TrashViewModel`, the dialog on the Safe Trash screen | built, tested as logic and as a rendered screen |
 | Whitelist excludes from scans, suggestions and trashing | `FileWalker`, `WhitelistRepositoryImpl`, `SuggestionGuard`, `TrashManager`, `WhitelistManager` | built, tested on the JVM |
 | 2 to 4 hashing workers, instant pause, resume, cancel | `HashingConcurrency`, `ScanController`, `PauseGate` | built, tested on the JVM |
 | Nothing hidden, system-named or hard-linked is suggested | `SuggestionGuard` | built, tested |
-| Prominent disclosure before All Files Access | onboarding | Phase 4 |
+| Prominent disclosure before All Files Access | onboarding screen, `OnboardingViewModel` | built, tested as a rendered screen; the system pages it opens need a device |
 
 The PRD's "Original Lock" is only as safe as the last check, the one made when something is actually trashed.
 That check exists (`TrashManager.trash`). `emptyTrashPermanently` is the one call the UI must confirm explicitly.
 
-## 8. Testing
+## 9. Testing
 
 - **Pure JVM tests** (`app/src/test`): domain rules, path helpers, matcher, trash policy and trash naming, settings
   codec, scoring, Original Lock policy, junk detectors, hashing engine and concurrency.
 - **Robolectric tests** (`app/src/test`): the DAO queries and the Room-backed repositories against an in-memory
   database; whole scans over real files in a temporary folder (`ScanRunnerTest`, `ScanControllerTest`), with what
   the scanner was asked to read taken from a recording hasher; Safe Trash over real files, moved, restored and
-  purged (`TrashManagerTest`, `TrashPurgeTest`); the purge as WorkManager plans and runs it; the whitelist manager.
+  purged (`TrashManagerTest`, `TrashPurgeTest`); the purge and the daily background scan as WorkManager plans and
+  runs them; the whitelist manager; keeping another copy of a group (`DuplicateGroupEditorTest`).
+- **ViewModel tests** (`app/src/test`, plain JVM): every screen's logic against fakes, with no Android and no
+  database: what each state works out, and that each action reaches what it was meant for.
+- **Rendered screens** (`app/src/test`, Robolectric with native graphics): each screen is drawn in each of its
+  states, what it says is asserted, its buttons are clicked, and a picture is written to
+  `app/build/screenshots/<name>.png` to look at. That is how layout and wording were checked without a device.
 - **Instrumented tests** (`app/src/androidTest`): the schema on real device SQLite, one whole scan on real
   storage through the real platform adapters, and Safe Trash on real shared storage. They need a device or emulator:
   `./gradlew connectedDebugAndroidTest`. They have never been run: they compile, nothing more.
@@ -516,12 +607,17 @@ Four caveats for JVM tests on a Windows host, all caused by the host and not by 
 - Creating symbolic links needs a privilege a plain Windows shell does not have. Two symlink tests are reported as
   skipped rather than failed there.
 - `File.getPath()` turns `/` into `\`. Tests that compare paths compare canonical ones, never `File.path`.
+- Robolectric's dynamic palette is light in dark mode too, so a test of dark colours or of the brand palette
+  turns the dynamic palette off (`CleanSweepTheme(dynamicColor = false)`).
+- A ViewModel shares its state only while something collects it, on a test scheduler that runs only when told.
+  The ViewModel tests keep a collector alive, give the scheduler a turn between looks, and read the state by
+  polling; a wait built on `yield` alone would keep the thread busy and never time out.
 
 A schema change requires bumping the `version` literal in `@Database`, a `Migration`, and a migration test.
 `DatabaseModule` intentionally does not configure a destructive fallback: rebuilding the database would orphan
 every entry in Safe Trash and drop the whitelist.
 
-## 9. Decisions waiting for confirmation
+## 10. Decisions waiting for confirmation
 
 These were reported to the product owner after each phase and have not been answered. The code follows the choice
 given here.
@@ -543,7 +639,7 @@ given here.
 | 2 | Empty folders are suggested only two levels below the storage root or deeper, never with a system name, and only at the top of an empty tree. |
 | 2 | Hidden entries are suggested only as temporary junk. |
 | 2 | The hashing worker count is chosen once per scan. |
-| 2 | The background indexing worker is not scheduled until Phase 4 adds the setting. |
+| 2 | The background indexing worker runs only when the setting is on (see Phase 4). |
 | 2 | Near-duplicate documents, similar photos, old screenshots and messaging media have no detectors of their own, although the PRD lists them as "should have". |
 | 3 | Safe Trash renames entries in place instead of copying them into private storage. |
 | 3 | Only a suggested file can be trashed, and a file that changed since the scan is left alone. |
@@ -551,4 +647,14 @@ given here.
 | 3 | An empty folder is trashed like a file, by renaming it, not deleted outright. |
 | 3 | The whitelist adds no rule for a path that a folder rule already covers. |
 | 3 | Trashing frees no space until the trash is emptied, so the screens cannot show "Space Reclaimed" right after "Move to Trash". |
+| 4 | Screens with a tab have no back arrow; the system's back button goes to the screen beneath. |
+| 4 | Copies of a group that are safe to clean are ticked from the start on the group's screen, as in the hub. |
+| 4 | "Review Recommended" items are moved only after one more tick in the sheet that asks for confirmation. |
+| 4 | "Undo" after a move to the trash restores the files from the trash; it does not stop the move. |
+| 4 | "Keep this copy" on a file that is not one of a group of duplicates takes its suggestion off the list. |
+| 4 | The folder picker in Settings is the app's own and starts at the storages; a single file is kept from its suggestion. |
+| 4 | Settings offer steps, not free ranges: smallest file nothing, 100 KB, 1 MB, 10 MB; large-file threshold 50 MB to 10 GB in eight steps; 30, 60, 90, 180 or 365 days. |
+| 4 | Background indexing is a setting that is off until the user turns it on, then runs once a day. |
+| 4 | A PDF is previewed by its first three pages, a text file by its first 64 KB, and only up to 1 MB. |
+| 4 | Not built from the PRD: smart alerts (notifications when storage runs low, weekly summaries), the cleanup history, and a file browser and search. The last two matter for the Play Console's permission declaration, which asks for file management features besides cleaning. |
 

@@ -32,5 +32,4 @@
     <string name="onboarding_denied_text">Without access to storage, CleanSweep cannot look for anything.</string>
     <string name="onboarding_denied_permanent_text">Android will not ask again. You can allow storage access in the app settings.</string>
     <string name="onboarding_settings_page_missing">This device has no page for it. Look for storage access in the app settings.</string>
-    <string name="onboarding_granted_title">Access granted</string>
 </resources>

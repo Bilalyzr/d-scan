@@ -18,7 +18,6 @@
     <string name="trash_due">Due to be deleted</string>
     <string name="trash_empty_title">Safe Trash is empty</string>
     <string name="trash_empty_text">What you remove is kept here for 30 days, and you can put it back from here until then.</string>
-    <string name="trash_working">Working</string>
 
     <string name="trash_confirm_title">Empty Safe Trash?</string>
     <plurals name="trash_confirm_text">

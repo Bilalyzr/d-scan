@@ -32,7 +32,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -85,7 +85,8 @@ private fun Messages(
     viewModel: TrashViewModel,
     messages: SnackbarHostState,
 ) {
-    val resources = LocalContext.current.resources
+    // Through LocalResources, so that a message follows a change of language.
+    val resources = LocalResources.current
     LaunchedEffect(viewModel, messages, resources) {
         viewModel.eventFlow.collect { event ->
             when (event) {

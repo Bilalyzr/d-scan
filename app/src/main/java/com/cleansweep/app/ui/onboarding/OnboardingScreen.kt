@@ -1,6 +1,7 @@
 package com.cleansweep.app.ui.onboarding
 
 import android.Manifest
+import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -88,7 +89,7 @@ fun OnboardingScreen(
         onDisclosureRead = viewModel::disclosureRead,
         onRequestAccess = {
             viewModel.requestLaunched()
-            if (state.method == AccessMethod.ALL_FILES_SETTINGS) {
+            if (state.method == AccessMethod.ALL_FILES_SETTINGS && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 if (!openAllFilesAccessSettings(context)) viewModel.settingsPageMissing()
             } else {
                 permissionLauncher.launch(

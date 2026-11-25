@@ -71,7 +71,7 @@ class ScanAndHubRenderTest {
     // ---- The scan screen ----
 
     @Composable
-    private fun scan(
+    private fun Scan(
         state: ScanState,
     ) {
         ScanContent(
@@ -89,7 +89,7 @@ class ScanAndHubRenderTest {
     @Test
     fun `while folders are read the ring keeps turning and shows where the scan is`() {
         set {
-            scan(
+            Scan(
                 ScanState.Running(
                     ScanProgress(
                         phase = ScanPhase.WALKING,
@@ -113,7 +113,7 @@ class ScanAndHubRenderTest {
     @Test
     fun `while files are read the ring shows how far the stage is, and a paused scan says so`() {
         set {
-            scan(
+            Scan(
                 ScanState.Running(
                     ScanProgress(
                         phase = ScanPhase.FULL_HASHING,
@@ -129,14 +129,14 @@ class ScanAndHubRenderTest {
 
         rule.onNodeWithText("Paused").assertIsDisplayed()
         rule.onNodeWithText("Resume").assertIsDisplayed()
-        rule.onNodeWithText("30 of 80 files done", substring = true).assertIsDisplayed()
+        rule.onNodeWithText("30 of 80 done", substring = true).assertIsDisplayed()
         rule.onNodeWithText("38%").assertIsDisplayed()
         rule.saveScreen("scan-paused-hashing")
     }
 
     @Test
     fun `a finished scan sums up what it found and leads on to the suggestions`() {
-        set { scan(ScanState.Finished(finishedSummary)) }
+        set { Scan(ScanState.Finished(finishedSummary)) }
 
         rule.onNodeWithText("Scan finished").assertIsDisplayed()
         rule.onNodeWithText("40 GB in 9,000 files").assertIsDisplayed()
@@ -147,7 +147,7 @@ class ScanAndHubRenderTest {
 
     @Test
     fun `a cancelled scan says that what was found is kept`() {
-        set { scan(ScanState.Cancelled(ScanProgress(filesScanned = 12L))) }
+        set { Scan(ScanState.Cancelled(ScanProgress(filesScanned = 12L))) }
 
         rule.onNodeWithText("Scan cancelled").assertIsDisplayed()
         rule.onNodeWithText("Scan again").assertIsDisplayed()
@@ -156,7 +156,7 @@ class ScanAndHubRenderTest {
 
     @Test
     fun `a scan that could not start for want of access offers the way to the permission`() {
-        set { scan(ScanState.Failed(ScanFailure.STORAGE_PERMISSION_MISSING)) }
+        set { Scan(ScanState.Failed(ScanFailure.STORAGE_PERMISSION_MISSING)) }
 
         rule.onNodeWithText("Storage access is off").assertIsDisplayed()
         rule.onNodeWithText("Allow storage access").assertIsDisplayed()
@@ -285,7 +285,7 @@ class ScanAndHubRenderTest {
     // ---- The confirmation sheet ----
 
     @Composable
-    private fun sheet(
+    private fun Sheet(
         summary: CleanSummary,
     ) {
         CleanConfirmationSheet(summary = summary, isWorking = false, onConfirm = {}, onCancel = {})
@@ -293,7 +293,7 @@ class ScanAndHubRenderTest {
 
     @Test
     fun `the sheet sums up what goes to the trash, and asks once more when a review item is among them`() {
-        set { sheet(CleanSummary.of(listOf(safePhoto, safeLog, reviewVideo))) }
+        set { Sheet(CleanSummary.of(listOf(safePhoto, safeLog, reviewVideo))) }
 
         rule.onNodeWithText("894 MB").assertIsDisplayed()
         rule.onNodeWithText("3 items").assertIsDisplayed()
@@ -313,7 +313,7 @@ class ScanAndHubRenderTest {
 
     @Test
     fun `the sheet for safe items alone needs no extra acknowledgement`() {
-        set { sheet(CleanSummary.of(listOf(safePhoto))) }
+        set { Sheet(CleanSummary.of(listOf(safePhoto))) }
 
         rule.onNodeWithText("1 item").assertIsDisplayed()
         rule.onNodeWithText("I have looked at the items that need a review").assertDoesNotExist()

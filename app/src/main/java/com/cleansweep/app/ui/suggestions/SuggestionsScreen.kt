@@ -48,7 +48,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -142,7 +142,8 @@ private fun Messages(
     viewModel: SuggestionsViewModel,
     messages: SnackbarHostState,
 ) {
-    val resources = LocalContext.current.resources
+    // Through LocalResources, so that a message follows a change of language.
+    val resources = LocalResources.current
     LaunchedEffect(viewModel, messages, resources) {
         viewModel.eventFlow.collect { event ->
             when (event) {
