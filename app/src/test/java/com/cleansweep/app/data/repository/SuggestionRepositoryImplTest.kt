@@ -182,4 +182,35 @@ class SuggestionRepositoryImplTest {
 
         assertEquals(emptyList<Long>(), fileIds(includeDismissed = true))
     }
+
+    @Test
+    fun `the suggestions of some files can be replaced on their own, and the rest stay as they are`() = runTest {
+        val a = indexedFile("/r/a.bin")
+        val b = indexedFile("/r/b.bin")
+        val c = indexedFile("/r/c.bin")
+        repository.replaceAll(listOf(draft(a.id, score = 90), draft(b.id, score = 70), draft(c.id, score = 60)))
+        repository.setDismissed(listOf(b.id), true)
+
+        // A group of duplicates changed: a is kept from now on and loses its suggestion, b takes its place.
+        repository.replaceForFiles(listOf(a.id, b.id), listOf(draft(b.id, score = 95)))
+
+        val all = repository.observeSuggestions(includeDismissed = true).first()
+        assertEquals(listOf(b.id, c.id), all.map { it.fileId })
+        assertEquals(95, all.first { it.fileId == b.id }.confidenceScore)
+        assertTrue("b was ignored before, and stays so", all.first { it.fileId == b.id }.isDismissed)
+        assertEquals("Only c is offered", listOf(c.id), fileIds(includeDismissed = false))
+    }
+
+    @Test
+    fun `a draft for a file outside the given ones is refused, and nothing is written`() = runTest {
+        val a = indexedFile("/r/a.bin")
+        val b = indexedFile("/r/b.bin")
+        repository.replaceAll(listOf(draft(a.id, score = 90)))
+
+        val failure = runCatching { repository.replaceForFiles(listOf(a.id), listOf(draft(b.id, score = 80))) }.exceptionOrNull()
+
+        assertTrue("Refused: $failure", failure is IllegalArgumentException)
+        assertEquals(listOf(a.id), fileIds(includeDismissed = true))
+        assertEquals("b was never given a suggestion", 0, database.suggestionItemDao().getActiveFileIds(listOf(b.id)).size)
+    }
 }

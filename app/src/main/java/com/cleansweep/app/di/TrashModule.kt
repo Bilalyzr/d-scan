@@ -11,6 +11,7 @@ import com.cleansweep.app.domain.repository.WhitelistRepository
 import com.cleansweep.app.domain.scanner.StorageRootsProvider
 import com.cleansweep.app.domain.scanner.trash.MediaScanner
 import com.cleansweep.app.domain.scanner.trash.PurgeScheduler
+import com.cleansweep.app.domain.scanner.trash.SafeTrash
 import com.cleansweep.app.domain.scanner.trash.TrashManager
 import com.cleansweep.app.domain.scanner.trash.TrashStorage
 import com.cleansweep.app.domain.scanner.whitelist.WhitelistManager
@@ -68,6 +69,11 @@ object TrashModule {
         clock = clock,
         ioDispatcher = ioDispatcher,
     )
+
+    /** The screens get Safe Trash through its interface, so that a ViewModel can be tested with a fake. */
+    @Provides
+    @Singleton
+    fun provideSafeTrash(manager: TrashManager): SafeTrash = manager
 
     @Provides
     @Singleton

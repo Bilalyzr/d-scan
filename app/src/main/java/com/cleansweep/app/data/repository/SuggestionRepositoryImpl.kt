@@ -53,6 +53,25 @@ class SuggestionRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun replaceForFiles(
+        fileIds: Collection<Long>,
+        suggestions: List<SuggestionDraft>,
+    ) {
+        val ids = fileIds.distinct()
+        val idSet = ids.toSet()
+        require(suggestions.all { it.fileId in idSet }) { "Only suggestions for the given files may be written" }
+        database.withTransaction {
+            val dismissed = HashSet<Long>()
+            ids.chunked(MAX_BIND_ARGS_PER_QUERY).flatMapTo(dismissed) { suggestionItemDao.getDismissedFileIdsIn(it) }
+            ids.chunked(MAX_BIND_ARGS_PER_QUERY).forEach { suggestionItemDao.deleteByFileIds(it) }
+            if (suggestions.isNotEmpty()) {
+                suggestionItemDao.upsertAll(
+                    suggestions.map { it.toEntity(isDismissed = it.fileId in dismissed) },
+                )
+            }
+        }
+    }
+
     override suspend fun setDismissed(fileIds: Collection<Long>, dismissed: Boolean) {
         database.withTransaction {
             fileIds.distinct().chunked(MAX_BIND_ARGS_PER_QUERY).forEach {

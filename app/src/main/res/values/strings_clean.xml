@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The sheet that asks before files go to Safe Trash -->
+    <string name="clean_title">Move to Trash</string>
+    <plurals name="clean_items">
+        <item quantity="one">1 item</item>
+        <item quantity="other">%1$s items</item>
+    </plurals>
+    <string name="clean_breakdown_line">%1$s: %2$s</string>
+    <plurals name="clean_review_title">
+        <item quantity="one">%1$s needs a review first</item>
+        <item quantity="other">%1$s need a review first</item>
+    </plurals>
+    <string name="clean_review_text">These are large files or old installers. The app cannot be sure that you no longer need them, so look at them before they go.</string>
+    <string name="clean_review_checkbox">I have looked at the items that need a review</string>
+    <string name="clean_explainer">Nothing is deleted for good. The files move to Safe Trash, where you can restore them for 30 days. The space is freed when the trash is emptied.</string>
+    <string name="clean_confirm">Move to Trash</string>
+
+    <!-- Why an item is suggested -->
+    <string name="reason_exact_copy">Exact copy of another file</string>
+    <string name="reason_temp_or_log">Temporary or log file</string>
+    <string name="reason_thumbnail_cache">Leftover thumbnail cache</string>
+    <string name="reason_zero_byte">Empty file, 0 bytes</string>
+    <string name="reason_installed_apk">The app in it is already installed</string>
+    <string name="reason_old_installer">Installer older than a week</string>
+    <string name="reason_empty_folder">Empty folder</string>
+    <string name="reason_large_file">Large file</string>
+    <string name="reason_in_downloads">In Downloads</string>
+    <string name="reason_in_messaging_sent">Sent from a chat app</string>
+    <string name="reason_stale_90_days">Untouched for 90 days or longer</string>
+    <string name="reason_blurry_media">Blurry or very small photo</string>
+    <string name="reason_recent">Changed in the last week</string>
+
+    <!-- Kinds of suggestions, by name -->
+    <string name="suggest_exact_duplicate">Exact copies</string>
+    <string name="suggest_obsolete_installer">Old installers</string>
+    <string name="suggest_temp_file">Temporary files</string>
+    <string name="suggest_zero_byte">Empty files</string>
+    <string name="suggest_empty_folder">Empty folders</string>
+    <string name="suggest_large_forgotten">Large files, long unused</string>
+
+    <!-- Why a file was not moved to Safe Trash -->
+    <string name="refusal_not_indexed">no longer in the index</string>
+    <string name="refusal_not_suggested">not suggested any more</string>
+    <string name="refusal_whitelisted">on the list of files to keep</string>
+    <string name="refusal_protected_original">the copy that its group keeps</string>
+    <string name="refusal_changed">changed since the scan</string>
+    <string name="refusal_gone">no longer there</string>
+    <string name="refusal_read_only">on storage the app cannot write to</string>
+    <string name="refusal_could_not_move">not moved by the storage</string>
+</resources>

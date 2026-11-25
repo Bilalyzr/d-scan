@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Screen 4: the Suggestions Hub -->
+    <string name="hub_title">Suggestions</string>
+    <string name="hub_tab_safe">Safe to clean</string>
+    <string name="hub_tab_review">Review</string>
+    <string name="hub_tab_duplicates">Duplicates</string>
+    <string name="hub_banner_safe">%1$s safe to clean</string>
+    <string name="hub_banner_review">%1$s to review</string>
+
+    <string name="hub_scanning_title">A scan is running</string>
+    <string name="hub_scanning_text">The suggestions are complete when the scan has finished. Nothing can be moved until then.</string>
+
+    <string name="hub_filter_type">Only %1$s</string>
+    <string name="hub_filter_category">Only %1$s</string>
+    <string name="hub_filter_clear">Show everything</string>
+
+    <string name="hub_never_scanned_title">No scan yet</string>
+    <string name="hub_never_scanned_text">Scan your device to find out what can go.</string>
+    <string name="hub_empty_safe_title">Nothing is safe to clean right now</string>
+    <string name="hub_empty_safe_text">Exact copies, temporary files and empty folders that can go show up here, ticked.</string>
+    <string name="hub_empty_review_title">Nothing needs a review</string>
+    <string name="hub_empty_review_text">Large files and old installers that you may no longer need show up here.</string>
+    <string name="hub_empty_duplicates_title">No identical files were found</string>
+    <string name="hub_empty_duplicates_text">When two files have the same content down to the last byte, they show up here as a group.</string>
+    <string name="hub_empty_filtered_title">Nothing to show with this filter</string>
+
+    <string name="hub_show_ignored">Show ignored (%1$s)</string>
+    <string name="hub_hide_ignored">Hide ignored</string>
+    <string name="hub_select_all_safe">Tick everything safe to clean</string>
+    <string name="hub_unselect_all">Untick everything</string>
+    <string name="hub_auto_select_section">Tick by rule, for all groups</string>
+    <string name="auto_keep_oldest">Keep the oldest copy</string>
+    <string name="auto_keep_newest">Keep the newest copy</string>
+    <string name="auto_keep_shortest_path">Keep the copy with the shortest path</string>
+    <string name="auto_unselect_all">Untick all copies</string>
+    <string name="auto_keep_oldest_short">its oldest copy</string>
+    <string name="auto_keep_newest_short">its newest copy</string>
+    <string name="auto_keep_shortest_path_short">the copy with the shortest path</string>
+    <plurals name="hub_rule_applied">
+        <item quantity="one">%1$s group now keeps %2$s</item>
+        <item quantity="other">%1$s groups now keep %2$s</item>
+    </plurals>
+    <string name="hub_rule_nothing_changed">Every group keeps that copy already</string>
+    <string name="hub_rule_unticked">Nothing is marked now</string>
+
+    <!-- One suggestion in the list -->
+    <string name="hub_row_review_tag">Review</string>
+    <string name="hub_row_ignored_tag">Ignored</string>
+    <string name="hub_row_preview">Preview</string>
+    <string name="hub_row_mark">Mark for deletion</string>
+    <string name="hub_row_unmark">Do not mark for deletion</string>
+    <string name="hub_row_more">More actions</string>
+    <string name="hub_row_see_copies">See all copies</string>
+    <string name="hub_row_ignore">Ignore this suggestion</string>
+    <string name="hub_row_unignore">Stop ignoring this suggestion</string>
+    <string name="hub_row_never_suggest">Never suggest this file again</string>
+    <string name="hub_row_folder_in">in %1$s</string>
+
+    <!-- One group of identical files in the list -->
+    <string name="hub_group_reclaim">%1$s can be freed</string>
+    <string name="hub_group_all_kept">Every copy is kept</string>
+    <string name="hub_group_original_in">Kept copy: %1$s</string>
+    <string name="hub_group_open_hint">Opens the group of %1$s copies</string>
+
+    <!-- The bar above the list -->
+    <plurals name="hub_selected">
+        <item quantity="one">1 selected</item>
+        <item quantity="other">%1$s selected</item>
+    </plurals>
+    <string name="hub_move_to_trash">Move to Trash</string>
+    <string name="hub_move_to_trash_sized">Move to Trash (%1$s)</string>
+
+    <!-- What came of an action -->
+    <string name="hub_msg_moved_one">Moved 1 file (%1$s) to Safe Trash</string>
+    <string name="hub_msg_moved_many">Moved %1$s files (%2$s) to Safe Trash</string>
+    <string name="hub_msg_nothing_moved">Nothing was moved</string>
+    <string name="hub_msg_not_moved">%1$s not moved: %2$s</string>
+    <string name="hub_msg_undo">Undo</string>
+    <plurals name="hub_msg_restored">
+        <item quantity="one">1 file put back where it was</item>
+        <item quantity="other">%1$s files put back where they were</item>
+    </plurals>
+    <string name="hub_msg_restore_nothing">Nothing was left in Safe Trash to put back</string>
+    <string name="hub_msg_ignored">Suggestion ignored</string>
+    <string name="hub_msg_unignored">Suggestion is back</string>
+    <string name="hub_msg_excluded">This file will not be suggested again</string>
+
+    <string name="path_internal_storage">Internal storage</string>
+</resources>

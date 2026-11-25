@@ -19,11 +19,8 @@ import com.cleansweep.app.domain.scanner.hashing.HashingConcurrency
 import com.cleansweep.app.domain.scanner.junk.DetectionContext
 import com.cleansweep.app.domain.scanner.junk.Finding
 import com.cleansweep.app.domain.scanner.junk.InstalledApkOracle
+import com.cleansweep.app.domain.scanner.junk.JunkDetectorSuite
 import com.cleansweep.app.domain.scanner.junk.JunkRules
-import com.cleansweep.app.domain.scanner.junk.LargeForgottenFileDetector
-import com.cleansweep.app.domain.scanner.junk.ObsoleteApkDetector
-import com.cleansweep.app.domain.scanner.junk.TempFileDetector
-import com.cleansweep.app.domain.scanner.junk.ZeroByteDetector
 import com.cleansweep.app.domain.scanner.scoring.SuggestionEngine
 import com.cleansweep.app.domain.scanner.walker.FileSink
 import com.cleansweep.app.domain.scanner.walker.FileWalker
@@ -172,16 +169,7 @@ class ScanRunner(
             largeFileThresholdBytes = context.settings.largeFileThresholdBytes,
             junkExtensions = JunkRules.candidateExtensions(),
         )
-        findings += TempFileDetector().detect(candidates, context)
-        findings += ZeroByteDetector().detect(candidates, context)
-        findings += LargeForgottenFileDetector().detect(candidates, context)
-        findings += ObsoleteApkDetector(installedApks).detect(candidates, context)
-        for (placeholder in candidates) {
-            if (placeholder.isDirectory) {
-                val reasons = JunkRules.reasonsFor(ReasonCode.EMPTY_FOLDER, placeholder, context.now)
-                findings += Finding(placeholder, SuggestionCategory.EMPTY_FOLDER, reasons)
-            }
-        }
+        findings += JunkDetectorSuite(installedApks).detect(candidates, context)
 
         val eligible = findings.filter { finding ->
             // Below a volume this scan read, not whitelisted meanwhile, and allowed by the guard.

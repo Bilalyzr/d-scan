@@ -40,7 +40,7 @@ class HomeViewModelTest {
     val mainDispatcher = MainDispatcherRule()
 
     private val index = FakeFileIndexRepository()
-    private val suggestions = FakeSuggestionRepository()
+    private val suggestions = FakeSuggestionRepository(index)
     private val trash = FakeTrashRepository()
     private val scans = FakeScanControl()
     private val access = FakeAccess(granted = true)

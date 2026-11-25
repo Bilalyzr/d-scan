@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Screen 3: the progress screen of a running scan -->
+    <string name="scan_title">Scan</string>
+    <string name="scan_running_title">Scanning</string>
+
+    <string name="scan_phase_walking">Looking through your files</string>
+    <string name="scan_phase_partial">Comparing files, step 1 of 2</string>
+    <string name="scan_phase_full">Reading files again to be sure, step 2 of 2</string>
+    <string name="scan_phase_analysing">Putting together suggestions</string>
+    <string name="scan_paused">Paused</string>
+    <string name="scan_percent">%1$d%%</string>
+    <string name="scan_stage_description">%1$s: %2$d of %3$d files done</string>
+
+    <string name="scan_files_scanned">%1$s so far</string>
+    <string name="scan_size_scanned">%1$s in total</string>
+    <string name="scan_current_folder">Now in %1$s</string>
+    <plurals name="scan_errors">
+        <item quantity="one">%1$s file or folder could not be read. The scan goes on past it.</item>
+        <item quantity="other">%1$s files or folders could not be read. The scan goes on past them.</item>
+    </plurals>
+    <string name="scan_can_leave">You can leave this screen. The scan goes on, and the Home screen shows when it is done.</string>
+
+    <string name="scan_pause">Pause</string>
+    <string name="scan_resume">Resume</string>
+
+    <!-- No scan going on -->
+    <string name="scan_idle_title">No scan is running</string>
+    <string name="scan_idle_text">A scan looks for duplicate files, junk and large files you may have forgotten.</string>
+
+    <!-- How the last scan ended -->
+    <string name="scan_finished_title">Scan finished</string>
+    <plurals name="scan_finished_files">
+        <item quantity="one">%2$s in %1$s file</item>
+        <item quantity="other">%2$s in %1$s files</item>
+    </plurals>
+    <plurals name="scan_finished_duplicates">
+        <item quantity="one">%1$s group of identical files, with %2$s in copies you do not need</item>
+        <item quantity="other">%1$s groups of identical files, with %2$s in copies you do not need</item>
+    </plurals>
+    <plurals name="scan_finished_others">
+        <item quantity="one">And %1$s other suggestion</item>
+        <item quantity="other">And %1$s other suggestions</item>
+    </plurals>
+    <string name="scan_finished_none">Nothing to clean was found this time.</string>
+    <string name="scan_review">Review suggestions</string>
+
+    <string name="scan_cancelled_title">Scan cancelled</string>
+    <string name="scan_cancelled_text">What was found up to then is kept, and the next scan carries on from there.</string>
+    <string name="scan_again">Scan again</string>
+
+    <string name="scan_failed_permission_title">Storage access is off</string>
+    <string name="scan_failed_permission_text">CleanSweep cannot look at your files until you allow it.</string>
+    <string name="scan_failed_no_storage_title">Nothing to scan</string>
+    <string name="scan_failed_no_storage_text">No storage was found. Check that the storage of your phone is available.</string>
+    <string name="scan_failed_unexpected_title">The scan could not finish</string>
+    <string name="scan_failed_unexpected_text">Try again. A scan gets past files it cannot read, so the next one may go further.</string>
+</resources>

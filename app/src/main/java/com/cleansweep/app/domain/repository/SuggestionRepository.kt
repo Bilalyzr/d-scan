@@ -40,6 +40,18 @@ interface SuggestionRepository {
      */
     suspend fun replaceAll(suggestions: List<SuggestionDraft>)
 
+    /**
+     * Replaces the suggestions of [fileIds] and of no other file, the way [replaceAll] does for everything.
+     *
+     * For when the user keeps another copy of a group of duplicates, so that the copies that are redundant now
+     * are offered at once, without waiting for the next scan. A file whose suggestion was dismissed before comes
+     * back dismissed. Every draft must be for one of [fileIds].
+     */
+    suspend fun replaceForFiles(
+        fileIds: Collection<Long>,
+        suggestions: List<SuggestionDraft>,
+    )
+
     /** Hides or restores suggestions. Ignoring a suggestion never changes the file on disk. */
     suspend fun setDismissed(fileIds: Collection<Long>, dismissed: Boolean)
 

@@ -70,9 +70,17 @@ class ScanControllerTest {
         harness.close()
     }
 
-    /** Waits until the controller's state satisfies [where], and returns that state. */
-    private suspend fun awaitState(where: (ScanState) -> Boolean): ScanState =
-        withTimeout(20_000) { controller.state.first { where(it) } }
+    /**
+     * Waits until the controller's state satisfies [where], and returns that state.
+     *
+     * The states are also recorded by a collector on another thread. Assertions are about that recording, so it is
+     * given time to catch up here; otherwise a test could look before the collector had seen what it waits for.
+     */
+    private suspend fun awaitState(where: (ScanState) -> Boolean): ScanState {
+        val state = withTimeout(20_000) { controller.state.first { where(it) } }
+        withTimeout(20_000) { while (states.none(where)) delay(1) }
+        return state
+    }
 
     private fun running(): ScanState.Running = controller.state.value as ScanState.Running
 

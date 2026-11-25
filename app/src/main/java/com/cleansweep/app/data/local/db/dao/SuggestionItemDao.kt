@@ -89,6 +89,10 @@ interface SuggestionItemDao {
     @Query("SELECT file_id FROM suggestion_items WHERE is_dismissed = 1")
     suspend fun getDismissedFileIds(): List<Long>
 
+    /** Of [fileIds], the ones whose suggestion the user ignored. Callers chunk. */
+    @Query("SELECT file_id FROM suggestion_items WHERE is_dismissed = 1 AND file_id IN (:fileIds)")
+    suspend fun getDismissedFileIdsIn(fileIds: Collection<Long>): List<Long>
+
     /** Of [fileIds], the ones that currently have a suggestion the user has not dismissed. Callers chunk. */
     @Query("SELECT file_id FROM suggestion_items WHERE is_dismissed = 0 AND file_id IN (:fileIds)")
     suspend fun getActiveFileIds(fileIds: Collection<Long>): List<Long>

@@ -53,7 +53,7 @@ class TrashManager(
     private val purgeScheduler: PurgeScheduler,
     private val clock: Clock,
     private val ioDispatcher: CoroutineDispatcher,
-) {
+) : SafeTrash {
     private val writeLock = Mutex()
 
     /** Whether this process has asked for the recurring purge, so that it asks and cancels only on a change. */
@@ -61,16 +61,16 @@ class TrashManager(
     private var purgeIsScheduled: Boolean = false
 
     /** Every entry in Safe Trash, newest first. */
-    fun observeEntries(): Flow<List<TrashEntry>> = trash.observeEntries()
+    override fun observeEntries(): Flow<List<TrashEntry>> = trash.observeEntries()
 
     /** Space that emptying Safe Trash would free. */
-    fun observeTotalBytes(): Flow<Long> = trash.observeTotalBytes()
+    override fun observeTotalBytes(): Flow<Long> = trash.observeTotalBytes()
 
     /** Moves indexed files to Safe Trash, after checking each one. */
-    suspend fun trash(fileIds: Collection<Long>): TrashResult = underWriteLock { moveUnlocked(fileIds) }
+    override suspend fun trash(fileIds: Collection<Long>): TrashResult = underWriteLock { moveUnlocked(fileIds) }
 
     /** Puts trashed entries back where they came from. */
-    suspend fun restore(entryIds: Collection<Long>): RestoreResult = underWriteLock { restoreUnlocked(entryIds) }
+    override suspend fun restore(entryIds: Collection<Long>): RestoreResult = underWriteLock { restoreUnlocked(entryIds) }
 
     /** Deletes every entry for good whose 30 days are over. */
     suspend fun purgeExpired(): PurgeResult = underWriteLock { purgeUnlocked(trash.getExpired(now())) }
@@ -79,7 +79,7 @@ class TrashManager(
      * Deletes every entry for good, whatever its age. This is the only call that cannot be undone, so the UI
      * must have the user's explicit confirmation first.
      */
-    suspend fun emptyTrashPermanently(): PurgeResult = underWriteLock { purgeUnlocked(trash.getAll()) }
+    override suspend fun emptyTrashPermanently(): PurgeResult = underWriteLock { purgeUnlocked(trash.getAll()) }
 
     /**
      * Brings the manifest back in step with storage and purges what has expired. Meant for every app start.
