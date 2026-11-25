@@ -4,12 +4,13 @@ CleanSweep is an offline-first Android app that scans device storage, finds exac
 explains why each file is safe to delete. Nothing ever leaves the device.
 
 This document records the decisions behind the code and which layer enforces which rule. It is written for the
-engineers picking up Phases 3 and 4. Source of truth for product behaviour is the PRD; this file only explains how
-the code implements it and where it deliberately deviates.
+engineers picking up Phase 4. Source of truth for product behaviour is the PRD; this file only explains how the
+code implements it and where it deliberately deviates.
 
-**State:** Phase 1 (foundation and data layer) and Phase 2 (scanning engine) are built and tested on the JVM.
-Nothing has been run on an Android device yet: no device or emulator was available. Phase 3 (Safe Trash) and
-Phase 4 (the eight screens) are not started, so the engine cannot be started from the app's UI.
+**State:** Phase 1 (foundation and data layer), Phase 2 (scanning engine) and Phase 3 (Safe Trash and whitelist)
+are built and tested on the JVM. Nothing has been run on an Android device yet: no device or emulator was
+available. Phase 4 (the eight screens) is not started, so nothing can be started from the app's UI: no scan, no
+trashing, no restore.
 
 ## 1. Shape of the project
 
@@ -19,7 +20,8 @@ One Gradle module, `:app`, split by layer.
 app/src/main/java/com/cleansweep/app/
 ├── CleanSweepApp.kt              @HiltAndroidApp, on-demand WorkManager through HiltWorkerFactory
 ├── MainActivity.kt               single-activity host
-├── di/                           Hilt modules: Room, DataStore, Clock, coroutines, scanner, repository bindings
+├── di/                           Hilt modules: Room, DataStore, Clock, coroutines, scanner, trash, repository bindings
+├── ui/                           Material 3 theme and the temporary bootstrap screen; the eight screens are Phase 4
 ├── domain/                       plain Kotlin: no Android, no Hilt
 │   ├── model/                    IndexedFile, Suggestion, WhitelistRule, TrashEntry, enums, policy
 │   ├── repository/               repository interfaces
@@ -34,18 +36,22 @@ app/src/main/java/com/cleansweep/app/
 │       ├── hashing/              StreamingFileHasher, HashSchemes, HashingConcurrency
 │       ├── duplicates/           DuplicatePipeline, OriginalLockPolicy, LocationHeuristics
 │       ├── junk/                 JunkRules and the detectors
-│       └── scoring/              ConfidenceScorer, SuggestionEngine
+│       ├── scoring/              ConfidenceScorer, SuggestionEngine
+│       ├── trash/                Safe Trash (section 6): TrashManager, TrashNaming, TrashStorage, PurgeScheduler
+│       └── whitelist/            WhitelistManager
 └── data/
     ├── local/db/                 Room: entities, DAOs, query projections, CleanSweepDatabase
     ├── mapper/                   entity <-> domain
     ├── repository/               repository implementations
     └── scanner/                  Android adapters: storage roots, storage access, MIME types, link counts,
-                                  device state, installed packages, the background worker
+                                  device state, installed packages, the background workers; trash/ holds the
+                                  storage operations of Safe Trash, its media scanner and its purge schedule
 ```
 
 Dependency direction is one way: `ui` -> `domain` <- `data`. ViewModels see only the interfaces in
 `domain.repository`, which keeps them testable with fakes and keeps Room out of the UI. The scanning engine
-knows nothing of Android: every platform fact reaches it through a small interface, bound in `ScannerModule`.
+and the Safe Trash rules know nothing of Android: every platform fact reaches them through a small interface,
+bound in `ScannerModule` and `TrashModule`.
 
 ## 2. Toolchain
 
@@ -126,9 +132,9 @@ which guarantees one suggestion per file and removes suggestions with its file.
 matching folder. Adding a rule also removes anything already indexed under the path, and its suggestions, in the
 same transaction as the insert.
 
-**7. The trash manifest is written before a file is moved.** This is the rule the Safe Trash manager has to follow
-in Phase 3. A crash can then leave a manifest row whose file is missing, which is detectable and cleanable; it can
-never leave an untracked file in the trash. Only the repository half exists so far.
+**7. The trash manifest is written before an entry is moved.** `TrashManager` never touches an entry before its
+row is in the database. A crash can then leave a row whose entry was never moved, which the next start-up detects
+and forgets; it can never leave a trashed entry that the app does not know about. Section 6.5 has the detail.
 
 **8. SQL stays within what Android 10's SQLite 3.22 can run.** That rules out `ON CONFLICT DO UPDATE` (use Room's
 `@Upsert`), `RETURNING` and window functions. Statements also bind at most `MAX_BIND_ARGS_PER_QUERY` (900)
@@ -147,8 +153,10 @@ Room's `@Upsert` returns the new row id for an inserted row and **-1 for an upda
   `created_at` holds the inode change time, which a rename updates. `last_modified` is the age signal everything
   relies on, and "oldest" in the Original Lock policy means oldest `last_modified`.
 - **Same size and timestamp, different content.** A file modified twice within the filesystem's timestamp
-  granularity keeps a stale cached hash. This is the standard trade-off of size-and-time caching. Safe Trash
-  bounds the damage; Phase 3 can re-hash selected files before trashing them.
+  granularity keeps a stale cached hash. This is the standard trade-off of size-and-time caching. `TrashManager`
+  compares size and modification time again before it trashes anything (section 6.2), which does not catch this
+  case, since both look unchanged. What bounds the damage is Safe Trash itself: the entry is renamed, not deleted,
+  and can be restored for 30 days.
 - **Absent volumes keep their index.** The stale sweep is scoped to the volumes a scan actually visited, so an
   ejected SD card is not purged and does not need a full re-hash when it returns. Suggestions are likewise limited
   to files below the volumes the scan could read.
@@ -164,7 +172,7 @@ Room's `@Upsert` returns the new row id for an inserted row and **-1 for an upda
 | Android 11 and newer | `MANAGE_EXTERNAL_STORAGE` (All Files Access). The prominent disclosure and the settings deep link arrive in Phase 4. |
 | Network | `INTERNET` is declared with `tools:node="remove"`, so the manifest merger strips it even if a dependency declares it. |
 | Backup | Off, by two mechanisms. `allowBackup="false"` switches off every form of backup on Android 11 and lower, and `res/xml/backup_rules.xml` states the same exclusions for that range. From Android 12 on, cloud backup and device-to-device transfer follow `res/xml/data_extraction_rules.xml` instead, and a mode without rules is fully enabled, so that file excludes every storage domain from both. Auto Backup would otherwise copy the index of the user's filenames into their cloud backup or onto their next phone. |
-| Read-only SD cards | Partly handled, by design and unverified on a device. A volume mounted read-only is scanned, so its duplicates are found. Deleting from it needs a Storage Access Framework tree grant, which is Phase 3. |
+| Read-only SD cards | Handled by refusing, by design and unverified on a device. A volume mounted read-only is scanned, so its duplicates are found. Trashing from it fails with `STORAGE_READ_ONLY`, and nothing on the volume is changed. The Storage Access Framework tree grant that would allow writing to such a volume is not built. |
 
 The merged manifest requests exactly these permissions, and `ManifestPrivacyTest` pins the list together with the
 backup attributes:
@@ -173,7 +181,7 @@ backup attributes:
 | --- | --- | --- |
 | `READ_EXTERNAL_STORAGE`, `WRITE_EXTERNAL_STORAGE` (up to API 29) | app | Android 10 storage access. |
 | `MANAGE_EXTERNAL_STORAGE` | app | All Files Access on Android 11 and newer. |
-| `WAKE_LOCK`, `RECEIVE_BOOT_COMPLETED`, `FOREGROUND_SERVICE` | WorkManager | Needed to run and reschedule background indexing. |
+| `WAKE_LOCK`, `RECEIVE_BOOT_COMPLETED`, `FOREGROUND_SERVICE` | WorkManager | Needed to run and reschedule background work: the trash purge, and background indexing once it has a setting. |
 | `ACCESS_NETWORK_STATE` | WorkManager | Unused by CleanSweep (no work has a network constraint) and it does not allow any network access. It can be stripped with `tools:node="remove"` if the permission list should be minimal. |
 | `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` | androidx.core | App-internal; protects receivers that are not exported. |
 
@@ -243,6 +251,9 @@ unchanged storage the hasher is not called at all.
 - **Empty folders.** A folder with no file anywhere below it is empty. Only a full scan works them out, because a
   folder full of files skipped by a category filter looks empty without being so. Only the top folder of an empty
   tree is kept, so the same "nothing" is not offered three times over.
+- **Entries of Safe Trash are not indexed.** A file or folder whose name carries the trash mark (section 6) is
+  skipped. It still counts as content of its folder: moving that folder to the trash would carry the trashed entry
+  along and cut it off from the manifest.
 - **Storage roots.** The primary shared storage, then SD cards and USB drives, as reported by `StorageManager`. A
   volume that is not mounted is left out; one mounted read-only is included.
 
@@ -304,6 +315,7 @@ suggestion: the strongest defining signal decides the category, and every signal
 - it is an empty folder with a name the system or its apps use (`DCIM`, `Download`, `Screenshots`, ...), or fewer
   than two levels below the storage root;
 - other directory entries refer to the same stored content (a hard link), because deleting one frees no space;
+- it lies in Safe Trash already. The walker leaves such entries alone; this is the second lock on the same door;
 - it lies below a whitelisted path, or below a volume this scan could not read.
 
 ### 5.7 The scan service
@@ -327,39 +339,164 @@ suggestion: the strongest defining signal decides the category, and every signal
 `IncrementalIndexWorker` runs a full scan in the background. It is not scheduled anywhere yet: it joins the
 periodic schedule only once the user turns background indexing on, which is part of the settings screen in Phase 4.
 
-### Not built in Phase 2
+### Not built
 
-The PRD lists these as "should have" and they are not in the agreed Phase 2 scope: near-duplicate documents,
-similar and blurry photos, old screenshots as their own detector, and redundant messaging media as its own
-detector (duplicates inside WhatsApp and Telegram media are still found by the exact pipeline). The scoring
-already has the signals for them (`BLURRY_MEDIA`).
+The PRD lists these as "should have". They were not in the agreed Phase 2 scope, and Phase 3 did not add them:
+near-duplicate documents, similar and blurry photos, old screenshots as their own detector, and redundant
+messaging media as its own detector (duplicates inside WhatsApp and Telegram media are still found by the exact
+pipeline). The scoring already has the signals for them (`BLURRY_MEDIA`).
 
-## 6. Where each safety rule lives
+## 6. Safe Trash and the whitelist
+
+### 6.1 How an entry is trashed
+
+Nothing the user deletes is gone at once. Trashing an entry only renames it, in the folder it is in, to
+`.cleansweep-trashed-<token>-<name>` (`TrashNaming`), and writes a row for it in `trash_manifest` that expires
+30 days later.
+
+An entry is not copied anywhere. Copying it into the app's private storage would need as much free internal storage
+as the entry is large, which is exactly what a phone that needs cleaning does not have, and it would take minutes
+for a long video. Renaming within a folder takes no space and no time, works for a file of any size, and works the
+same on an SD card. It is also how Android's own system trash works.
+
+The leading dot hides the entry from MediaStore and from file managers that do not show hidden files. The media
+index is told about each move, so a trashed photo leaves the gallery at once and a restored one comes back.
+
+In the manifest, `trash_path` is that hidden path, `original_path` is where the entry came from, and `size_bytes`
+is what it takes.
+
+### 6.2 What is checked before anything is trashed
+
+`TrashManager.trash(fileIds)` takes ids of indexed files, never paths, and looks at each file again before it is
+moved. A suggestion only says what was true when the last scan ran. A file is refused when:
+
+- it is not in the index any more (`NOT_INDEXED`);
+- no suggestion asks for it, or the user dismissed the one that did (`NOT_SUGGESTED`);
+- it is whitelisted (`WHITELISTED`);
+- the user locked it, or it is the copy the Original Lock policy keeps for its duplicate group
+  (`PROTECTED_ORIGINAL`). Which copy that is is judged by the copies that are still on storage, not by the index,
+  which can be behind. If the Original had been removed by another app and the index still listed it, going by the
+  index would have let "clean" delete every remaining copy;
+- it is not what the suggestion was based on (`CHANGED_SINCE_SUGGESTED`): another size, another modification time,
+  or a folder that is no longer empty. A new scan looks at it again;
+- it is gone (`GONE`), or the storage is read-only (`STORAGE_READ_ONLY`) or fails (`COULD_NOT_MOVE`).
+
+A refusal never touches the file. Every file asked for comes back either in `trashed` or in `refused`, with the
+reason. `bytesTrashed` is what was moved, not what was freed: an entry keeps taking the same space until the trash
+is emptied.
+
+Only files and empty folders can be trashed, because only those are ever suggested. A folder with something in it
+is never moved.
+
+### 6.3 Restoring
+
+`TrashManager.restore(entryIds)` moves each entry back to its original path and drops its row. A folder that no
+longer exists is created. When something else has taken the original name meanwhile, the entry goes back next to it
+as `name (restored)`, then `name (restored 2)`, and so on.
+
+An entry whose file is no longer in the trash has nothing left to restore: its row is dropped and it is reported
+under `nothingLeft`. An entry the storage would not let go of stays in the manifest and is reported under
+`failures`, so it can be tried again.
+
+A restored file is a file on storage like any other. The next scan indexes it again, and if it is still a duplicate
+or still junk, it is suggested again.
+
+### 6.4 Deleting for good
+
+- `purgeExpired()` deletes every entry whose 30 days are over.
+- `emptyTrashPermanently()` deletes every entry, whatever its age. It is the only call that cannot be undone, so
+  the UI must have the user's explicit confirmation first.
+
+Deleting is where the app could destroy something that is not its own, so three things are never deleted:
+
+- a path that does not carry the trash mark. A manifest row that points at anything else is not ours: the row is
+  dropped and the file is not touched;
+- a folder that has something in it. The trash only ever trashed it empty, so what is in it was put there by
+  someone else. Nothing in it is touched and the entry stays, so that the user can see it and restore it;
+- an entry the storage refuses to give up. Its row stays, and the purge tries again later.
+
+Each delete method also touches only its own kind: the one for files never removes a folder, not even an empty one,
+and the other way round. This is the only place where space is freed.
+
+### 6.5 What a crash can and cannot do
+
+The row is written before the entry is touched, and each row is committed on its own. The two steps are deliberately
+not in one database transaction: a transaction would hold the rows uncommitted while entries are already being
+moved, and a crash would leave moved entries without rows.
+
+| What the next start finds | What it means | What is done |
+| --- | --- | --- |
+| A row, and the entry at its trash path | Nothing went wrong. | Nothing. |
+| A row, nothing at the trash path, the entry at its original path | The app stopped before the move. | The row is forgotten. The file was never moved, and the next scan treats it like any other file. |
+| A row, nothing at either path | Something else removed the trashed entry. | The row is forgotten. |
+
+A moved entry without a row cannot occur.
+
+### 6.6 When the purge runs
+
+- **In the background.** One recurring WorkManager request, once a day, under the name `safe-trash-purge`. It is
+  planned as soon as the trash holds something and cancelled once the trash is empty, and it survives the app being
+  closed and the phone being restarted. `TrashPurgeWorker` tries a failed run again twice and then gives up until
+  the next one.
+- **At every app start.** `CleanSweepApp` calls `TrashManager.maintain()`, which forgets the rows of section 6.5 and
+  purges what has expired. It never throws: a failed check is reported, and the next start-up tries again.
+
+The start-up check exists because background work can run late. An entry that stays too long costs nothing but
+space.
+
+### 6.7 The whitelist manager
+
+`WhitelistManager.protect(path)` protects a file or a folder with everything below it. The kind of the rule follows
+what the path is on storage. A path where nothing exists is not protected, and neither is a storage root, because
+that would hide the whole storage from every scan. A path that a folder rule above already covers gets no rule of
+its own: a second rule would have kept it protected after that folder rule is dropped.
+
+Protecting takes effect at once. Whatever was indexed below the path leaves the index, and with it every
+suggestion, so nothing below the path can be trashed on the strength of an old suggestion. `unprotect(rule)` drops a
+rule; the files below it are scanned and suggested again from the next scan on.
+
+### 6.8 Known limitations of Safe Trash
+
+- **Trashing frees no space.** That is true of any trash that keeps what was trashed. The PRD's happy path shows
+  "Space Reclaimed" right after "Move to Trash"; the UI cannot promise that and should say that the space is freed
+  when the trash is emptied.
+- **Trashed entries stay on shared storage**, as hidden files in their own folders. A file manager that shows
+  hidden files lists them. Another app with All Files Access can remove them. Uninstalling CleanSweep leaves them
+  behind, hidden and without a row, so they cannot be restored by the next install.
+- **Trashing while a scan runs** is not blocked. A scan that walked past a file just before it was trashed puts its
+  row back until the next scan. The suggestion then leads to a refusal (`GONE`), and nothing is deleted twice. The
+  UI should not offer cleaning while a scan is running.
+- **The rename on Android's shared storage is assumed to work** with All Files Access, since it is what the system
+  trash does. `TrashManagerInstrumentedTest` checks it on a real device; it has never been run.
+
+## 7. Where each safety rule lives
 
 | Rule | Enforced by | Status |
 | --- | --- | --- |
 | 3-stage duplicate pipeline, fixed 64 KB streaming buffers | `DuplicatePipeline`, `StreamingFileHasher` | built, tested on the JVM |
 | Incremental indexing | `FileIndexRepositoryImpl.applyScanBatch` | built, tested |
 | Canonical paths, symbolic links never followed | `FileWalker`, `StoragePaths`, whitelist repository | built, tested on the JVM; symlink tests are skipped where the host cannot create links |
-| Mandatory Original Lock | `is_original_locked`, `OriginalLockPolicy`, `SuggestionGuard` | selection built, tested; the check at deletion time is Phase 3 |
-| 30-day Safe Trash by default | manifest, `TrashPolicy` | manifest built; manager is Phase 3 |
-| Whitelist excludes from scans and suggestions | `FileWalker`, `WhitelistRepositoryImpl`, matcher | built, tested |
+| Mandatory Original Lock | `is_original_locked`, `OriginalLockPolicy`, `SuggestionGuard`, `TrashManager` | built, tested on the JVM: when suggestions are made, and again when something is trashed |
+| 30-day Safe Trash by default | `TrashManager`, `TrashNaming`, `TrashPurgeWorker` | built, tested on the JVM |
+| Nothing is trashed on a stale suggestion | `TrashManager.trash` | built, tested on the JVM |
+| Whitelist excludes from scans, suggestions and trashing | `FileWalker`, `WhitelistRepositoryImpl`, `SuggestionGuard`, `TrashManager`, `WhitelistManager` | built, tested on the JVM |
 | 2 to 4 hashing workers, instant pause, resume, cancel | `HashingConcurrency`, `ScanController`, `PauseGate` | built, tested on the JVM |
 | Nothing hidden, system-named or hard-linked is suggested | `SuggestionGuard` | built, tested |
 | Prominent disclosure before All Files Access | onboarding | Phase 4 |
 
-The deletion path in Phase 3 must re-check the whitelist, the Original Lock and the suggestion itself when it runs,
-instead of trusting what is stored. The PRD's "Original Lock" is only as safe as that last check.
+The PRD's "Original Lock" is only as safe as the last check, the one made when something is actually trashed.
+That check exists (`TrashManager.trash`). `emptyTrashPermanently` is the one call the UI must confirm explicitly.
 
-## 7. Testing
+## 8. Testing
 
-- **Pure JVM tests** (`app/src/test`): domain rules, path helpers, matcher, trash policy, settings codec, scoring,
-  Original Lock policy, junk detectors, hashing engine and concurrency.
+- **Pure JVM tests** (`app/src/test`): domain rules, path helpers, matcher, trash policy and trash naming, settings
+  codec, scoring, Original Lock policy, junk detectors, hashing engine and concurrency.
 - **Robolectric tests** (`app/src/test`): the DAO queries and the Room-backed repositories against an in-memory
-  database, and whole scans over real files in a temporary folder (`ScanRunnerTest`, `ScanControllerTest`). What the
-  scanner was asked to read is taken from a recording hasher, which is how the stage gating is checked.
-- **Instrumented tests** (`app/src/androidTest`): the schema on real device SQLite, and one whole scan on real
-  storage through the real platform adapters. They need a device or emulator:
+  database; whole scans over real files in a temporary folder (`ScanRunnerTest`, `ScanControllerTest`), with what
+  the scanner was asked to read taken from a recording hasher; Safe Trash over real files, moved, restored and
+  purged (`TrashManagerTest`, `TrashPurgeTest`); the purge as WorkManager plans and runs it; the whitelist manager.
+- **Instrumented tests** (`app/src/androidTest`): the schema on real device SQLite, one whole scan on real
+  storage through the real platform adapters, and Safe Trash on real shared storage. They need a device or emulator:
   `./gradlew connectedDebugAndroidTest`. They have never been run: they compile, nothing more.
 
 Run everything that does not need a device with `./gradlew testDebugUnitTest`.
@@ -382,4 +519,36 @@ Four caveats for JVM tests on a Windows host, all caused by the host and not by 
 
 A schema change requires bumping the `version` literal in `@Database`, a `Migration`, and a migration test.
 `DatabaseModule` intentionally does not configure a destructive fallback: rebuilding the database would orphan
-every file in Safe Trash and drop the whitelist.
+every entry in Safe Trash and drop the whitelist.
+
+## 9. Decisions waiting for confirmation
+
+These were reported to the product owner after each phase and have not been answered. The code follows the choice
+given here.
+
+| Phase | Decision |
+| --- | --- |
+| 1 | Application id `com.cleansweep.app` is a placeholder. |
+| 1 | Columns beyond the PRD schema: `file_index.category`, `created_at`, `is_directory`, `is_original_locked`, and `suggestion_items.reason_codes`. |
+| 1 | Empty folders are placeholder rows in `file_index`. |
+| 1 | "Oldest" for the Original Lock means oldest modification time. |
+| 1 | Backups are off entirely, so the whitelist does not survive a change of phone. |
+| 1 | `targetSdk` 36 and AGP 9.2.1 are kept although both have newer versions. |
+| 1 | `ACCESS_NETWORK_STATE` is left in, merged in by WorkManager. |
+| 2 | Scoring starts from a base of 35, derived from the PRD's weights and thresholds, and the score is kept inside the tier's range. |
+| 2 | Temp files, 0-byte files and empty folders modified in the last 7 days are never pre-selected. |
+| 2 | Stage 2 uses SHA-256 over the first and last 4 KB. |
+| 2 | Exact copies under 1 KB are not looked for. |
+| 2 | Locking a copy makes it the Original, and the copy that was the Original by default is then offered for deletion. |
+| 2 | Empty folders are suggested only two levels below the storage root or deeper, never with a system name, and only at the top of an empty tree. |
+| 2 | Hidden entries are suggested only as temporary junk. |
+| 2 | The hashing worker count is chosen once per scan. |
+| 2 | The background indexing worker is not scheduled until Phase 4 adds the setting. |
+| 2 | Near-duplicate documents, similar photos, old screenshots and messaging media have no detectors of their own, although the PRD lists them as "should have". |
+| 3 | Safe Trash renames entries in place instead of copying them into private storage. |
+| 3 | Only a suggested file can be trashed, and a file that changed since the scan is left alone. |
+| 3 | Which copy is the Original is judged by the copies still on storage. |
+| 3 | An empty folder is trashed like a file, by renaming it, not deleted outright. |
+| 3 | The whitelist adds no rule for a path that a folder rule already covers. |
+| 3 | Trashing frees no space until the trash is emptied, so the screens cannot show "Space Reclaimed" right after "Move to Trash". |
+
