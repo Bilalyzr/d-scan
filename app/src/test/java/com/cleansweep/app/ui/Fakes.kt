@@ -392,8 +392,10 @@ internal class FakeWhitelistRepository(
         path: String,
         type: WhitelistRuleType,
     ): WhitelistRule {
-        rules.value.firstOrNull { it.path == path }?.let { return it }
-        val rule = WhitelistRule(id = nextId++, path = path, type = type, createdAt = 0L)
+        // Stored in canonical form, as the real repository stores it.
+        val canonicalPath = StoragePaths.canonicalize(path)
+        rules.value.firstOrNull { it.path == canonicalPath }?.let { return it }
+        val rule = WhitelistRule(id = nextId++, path = canonicalPath, type = type, createdAt = 0L)
         rules.value = listOf(rule) + rules.value
         // The index may hold a path in another shape than the rule (a Windows test host canonicalises to "C:/...").
         val matcher = matcher()
@@ -473,5 +475,50 @@ internal class FakeScanControl : ScanControl {
 
     override fun reset() {
         state.value = ScanState.Idle
+    }
+}
+
+/**
+ * Safe Trash over the fake manifest, as the trash screen sees it. A test decides what emptying reports, and
+ * which entries have nothing left to put back.
+ */
+internal class FakeSafeTrashForScreen(
+    private val manifest: FakeTrashRepository = FakeTrashRepository(),
+) : SafeTrash {
+    val restoreCalls = ArrayList<List<Long>>()
+
+    /** What the next emptying reports; by default every entry deleted. */
+    var nextEmptyResult: com.cleansweep.app.domain.scanner.trash.PurgeResult? = null
+
+    override fun observeEntries(): Flow<List<TrashEntry>> = manifest.observeEntries()
+
+    override fun observeTotalBytes(): Flow<Long> = manifest.observeTotalBytes()
+
+    override suspend fun trash(fileIds: Collection<Long>): com.cleansweep.app.domain.scanner.trash.TrashResult =
+        throw UnsupportedOperationException("The trash screen never moves anything into the trash")
+
+    override suspend fun restore(entryIds: Collection<Long>): com.cleansweep.app.domain.scanner.trash.RestoreResult {
+        restoreCalls += entryIds.toList()
+        val entries = manifest.entries.value
+        val found = entries.filter { it.id in entryIds }
+        manifest.entries.value = entries - found.toSet()
+        return com.cleansweep.app.domain.scanner.trash.RestoreResult(
+            restoredPaths = found.map { it.originalPath },
+            nothingLeft = entryIds.filter { id -> found.none { it.id == id } }.map { "gone" },
+            failures = emptyList(),
+        )
+    }
+
+    override suspend fun emptyTrashPermanently(): com.cleansweep.app.domain.scanner.trash.PurgeResult {
+        val all = manifest.entries.value
+        manifest.entries.value = emptyList()
+        return nextEmptyResult ?: com.cleansweep.app.domain.scanner.trash.PurgeResult(
+            all.size,
+            all.sumOf { it.sizeBytes },
+            0,
+            0,
+            0,
+            0,
+        )
     }
 }

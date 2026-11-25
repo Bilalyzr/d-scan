@@ -118,6 +118,8 @@ internal class FakeSettingsRepository(
     override suspend fun setLargeFileStaleDays(days: Int) = update { it.copy(largeFileStaleDays = days) }
 
     override suspend fun setThemeMode(mode: ThemeMode) = update { it.copy(themeMode = mode) }
+
+    override suspend fun setBackgroundIndexing(enabled: Boolean) = update { it.copy(backgroundIndexing = enabled) }
 }
 
 /**

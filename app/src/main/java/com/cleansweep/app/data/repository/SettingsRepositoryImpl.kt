@@ -39,6 +39,9 @@ class SettingsRepositoryImpl @Inject constructor(
 
     override suspend fun setThemeMode(mode: ThemeMode) = update { it.copy(themeMode = mode) }
 
+    override suspend fun setBackgroundIndexing(enabled: Boolean) =
+        update { it.copy(backgroundIndexing = enabled) }
+
     /**
      * One read-modify-write per change, so the other settings are never clobbered. The codec clamps the values on
      * the way in.

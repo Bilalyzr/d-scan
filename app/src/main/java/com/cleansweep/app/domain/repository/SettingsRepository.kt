@@ -20,4 +20,6 @@ interface SettingsRepository {
     suspend fun setLargeFileStaleDays(days: Int)
 
     suspend fun setThemeMode(mode: ThemeMode)
+
+    suspend fun setBackgroundIndexing(enabled: Boolean)
 }

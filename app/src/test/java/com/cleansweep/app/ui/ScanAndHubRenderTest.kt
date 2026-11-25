@@ -173,7 +173,6 @@ class ScanAndHubRenderTest {
         SuggestionsContent(
             state = state,
             messages = remember { SnackbarHostState() },
-            onBack = {},
             onScan = {},
             onAllowAccess = {},
             onOpenGroup = {},

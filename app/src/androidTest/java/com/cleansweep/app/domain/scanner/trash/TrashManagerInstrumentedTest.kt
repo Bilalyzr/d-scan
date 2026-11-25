@@ -186,5 +186,7 @@ class TrashManagerInstrumentedTest {
         override suspend fun setLargeFileStaleDays(days: Int) = Unit
 
         override suspend fun setThemeMode(mode: ThemeMode) = Unit
+
+        override suspend fun setBackgroundIndexing(enabled: Boolean) = Unit
     }
 }

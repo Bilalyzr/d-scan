@@ -1,6 +1,7 @@
 package com.cleansweep.app.data.repository
 
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.mutablePreferencesOf
@@ -21,6 +22,7 @@ private object PreferenceKeys {
     val LARGE_FILE_THRESHOLD_BYTES = longPreferencesKey("large_file_threshold_bytes")
     val LARGE_FILE_STALE_DAYS = intPreferencesKey("large_file_stale_days")
     val THEME_MODE = stringPreferencesKey("theme_mode")
+    val BACKGROUND_INDEXING = booleanPreferencesKey("background_indexing")
 }
 
 /**
@@ -42,6 +44,7 @@ internal object UserPreferencesCodec {
             themeMode = this[PreferenceKeys.THEME_MODE]
                 ?.let { stored -> ThemeMode.entries.firstOrNull { it.name == stored } }
                 ?: defaults.themeMode,
+            backgroundIndexing = this[PreferenceKeys.BACKGROUND_INDEXING] ?: defaults.backgroundIndexing,
         ).normalized()
     }
 
@@ -53,6 +56,7 @@ internal object UserPreferencesCodec {
             this[PreferenceKeys.LARGE_FILE_THRESHOLD_BYTES] = normalized.largeFileThresholdBytes
             this[PreferenceKeys.LARGE_FILE_STALE_DAYS] = normalized.largeFileStaleDays
             this[PreferenceKeys.THEME_MODE] = normalized.themeMode.name
+            this[PreferenceKeys.BACKGROUND_INDEXING] = normalized.backgroundIndexing
         }
     }
 

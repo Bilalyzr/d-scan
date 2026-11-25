@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Lock
@@ -86,7 +85,6 @@ import com.cleansweep.app.ui.common.label
  */
 @Composable
 fun SuggestionsScreen(
-    onBack: () -> Unit,
     onScan: () -> Unit,
     onAllowAccess: () -> Unit,
     onOpenGroup: (String) -> Unit,
@@ -102,7 +100,6 @@ fun SuggestionsScreen(
     SuggestionsContent(
         state = state,
         messages = messages,
-        onBack = onBack,
         // The scan service answers to the hub; the scan screen shows what it says.
         onScan = {
             viewModel.startScan()
@@ -238,7 +235,6 @@ private fun Resources.ruleApplied(
 internal fun SuggestionsContent(
     state: HubUiState,
     messages: SnackbarHostState,
-    onBack: () -> Unit,
     onScan: () -> Unit,
     onAllowAccess: () -> Unit,
     onOpenGroup: (String) -> Unit,
@@ -262,16 +258,9 @@ internal fun SuggestionsContent(
     Scaffold(
         topBar = {
             Column {
+                // A screen with a tab is a root of its own, so it has no back arrow.
                 TopAppBar(
                     title = { Text(stringResource(R.string.hub_title)) },
-                    navigationIcon = {
-                        IconButton(onClick = onBack) {
-                            Icon(
-                                Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = stringResource(R.string.action_back),
-                            )
-                        }
-                    },
                     actions = {
                         IconButton(onClick = { menuOpen = true }) {
                             Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.action_more_options))

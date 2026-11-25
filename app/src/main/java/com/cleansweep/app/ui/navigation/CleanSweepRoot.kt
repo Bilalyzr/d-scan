@@ -2,7 +2,9 @@ package com.cleansweep.app.ui.navigation
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -28,7 +30,9 @@ import com.cleansweep.app.ui.home.HomeScreen
 import com.cleansweep.app.ui.onboarding.OnboardingScreen
 import com.cleansweep.app.ui.preview.PreviewScreen
 import com.cleansweep.app.ui.scan.ScanScreen
+import com.cleansweep.app.ui.settings.SettingsScreen
 import com.cleansweep.app.ui.suggestions.SuggestionsScreen
+import com.cleansweep.app.ui.trash.TrashScreen
 
 /** A screen with a tab of its own in the bar at the bottom. */
 private data class TopLevel(
@@ -43,6 +47,8 @@ private data class TopLevel(
 private val topLevelDestinations = listOf(
     TopLevel(Routes.HOME, Routes.HOME, R.string.nav_home, Icons.Filled.Home),
     TopLevel(Routes.SUGGESTIONS, Routes.suggestions(), R.string.nav_suggestions, AppIcons.Suggestions),
+    TopLevel(Routes.TRASH, Routes.TRASH, R.string.nav_trash, Icons.Filled.Delete),
+    TopLevel(Routes.SETTINGS, Routes.SETTINGS, R.string.nav_settings, Icons.Filled.Settings),
 )
 
 /**
@@ -85,7 +91,7 @@ fun CleanSweepRoot(
                 HomeScreen(
                     onOpenSuggestions = { navController.navigate(Routes.suggestions(type = it)) },
                     onOpenScan = { navController.navigate(Routes.SCAN) },
-                    onOpenTrash = { },
+                    onOpenTrash = { navController.openTopLevel(Routes.TRASH) },
                     onAllowAccess = { navController.navigate(Routes.ONBOARDING) },
                 )
             }
@@ -104,12 +110,17 @@ fun CleanSweepRoot(
                 ),
             ) {
                 SuggestionsScreen(
-                    onBack = { navController.leaveTopLevel() },
                     onScan = { navController.navigate(Routes.SCAN) },
                     onAllowAccess = { navController.navigate(Routes.ONBOARDING) },
                     onOpenGroup = { navController.navigate(Routes.group(it)) },
                     onOpenFile = { navController.navigate(Routes.preview(it)) },
                 )
+            }
+            composable(Routes.TRASH) {
+                TrashScreen(onAllowAccess = { navController.navigate(Routes.ONBOARDING) })
+            }
+            composable(Routes.SETTINGS) {
+                SettingsScreen()
             }
             composable(
                 route = Routes.GROUP,
@@ -139,11 +150,6 @@ private fun NavHostController.leaveOnboarding() {
         popUpTo(Routes.ONBOARDING) { inclusive = true }
         launchSingleTop = true
     }
-}
-
-/** Leaves a screen with a tab for the one beneath it, or for the dashboard when there is none. */
-private fun NavHostController.leaveTopLevel() {
-    if (!popBackStack()) openTopLevel(Routes.HOME)
 }
 
 /** After a scan, the app lands on the Suggestions Hub (PRD 5, step 3). The scan screen is left behind. */

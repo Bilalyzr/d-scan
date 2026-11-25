@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Screen 7: Safe Trash -->
+    <string name="trash_title">Safe Trash</string>
+    <string name="trash_summary_keep">What you remove stays here for 30 days. Then it is deleted for good.</string>
+    <plurals name="trash_next_purge">
+        <item quantity="one">The next ones go in %1$s day.</item>
+        <item quantity="other">The next ones go in %1$s days.</item>
+    </plurals>
+    <string name="trash_due_now">Some of it is due to be deleted today.</string>
+    <string name="trash_restore_everything">Put everything back</string>
+    <string name="trash_empty_bin">Empty bin</string>
+    <string name="trash_put_back">Put back</string>
+    <plurals name="trash_days_left">
+        <item quantity="one">%1$s day left</item>
+        <item quantity="other">%1$s days left</item>
+    </plurals>
+    <string name="trash_due">Due to be deleted</string>
+    <string name="trash_empty_title">Safe Trash is empty</string>
+    <string name="trash_empty_text">What you remove is kept here for 30 days, and you can put it back from here until then.</string>
+    <string name="trash_working">Working</string>
+
+    <string name="trash_confirm_title">Empty Safe Trash?</string>
+    <plurals name="trash_confirm_text">
+        <item quantity="one">The %1$s file in Safe Trash (%2$s) is deleted for good. This cannot be undone.</item>
+        <item quantity="other">The %1$s files in Safe Trash (%2$s) are deleted for good. This cannot be undone.</item>
+    </plurals>
+    <string name="trash_confirm_yes">Delete for good</string>
+
+    <!-- What came of an action -->
+    <plurals name="trash_msg_put_back">
+        <item quantity="one">1 file put back where it was</item>
+        <item quantity="other">%1$s files put back where they were</item>
+    </plurals>
+    <plurals name="trash_msg_nothing_left">
+        <item quantity="one">1 file was already gone from the trash</item>
+        <item quantity="other">%1$s files were already gone from the trash</item>
+    </plurals>
+    <plurals name="trash_msg_not_put_back">
+        <item quantity="one">1 file could not be put back. It stays in Safe Trash.</item>
+        <item quantity="other">%1$s files could not be put back. They stay in Safe Trash.</item>
+    </plurals>
+    <plurals name="trash_msg_deleted">
+        <item quantity="one">Deleted 1 file for good, freeing %1$s</item>
+        <item quantity="other">Deleted %2$s files for good, freeing %1$s</item>
+    </plurals>
+    <plurals name="trash_msg_folders_kept">
+        <item quantity="one">1 folder had something in it after all, so it was kept.</item>
+        <item quantity="other">%1$s folders had something in them after all, so they were kept.</item>
+    </plurals>
+    <plurals name="trash_msg_delete_failed">
+        <item quantity="one">1 file could not be deleted. It stays in Safe Trash.</item>
+        <item quantity="other">%1$s files could not be deleted. They stay in Safe Trash.</item>
+    </plurals>
+</resources>

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Screen 8: Settings and the whitelist -->
+    <string name="settings_title">Settings</string>
+
+    <string name="settings_exclusions_title">Leave alone</string>
+    <string name="settings_exclusions_text">Files and folders CleanSweep never scans and never suggests.</string>
+    <string name="settings_exclusions_empty">Nothing is excluded yet.</string>
+    <string name="settings_exclusions_add">Add a folder</string>
+    <string name="settings_exclusions_file_hint">To keep a single file from being suggested, use \"Never suggest this file again\" on its suggestion.</string>
+    <string name="settings_stop_excluding">Stop excluding</string>
+
+    <string name="picker_title">Choose a folder to exclude</string>
+    <string name="picker_top">Choose a storage</string>
+    <string name="picker_up">Up one folder</string>
+    <string name="picker_loading">Reading the folder</string>
+    <string name="picker_empty">This folder has no other folders inside it.</string>
+    <string name="picker_exclude">Exclude this folder</string>
+    <string name="picker_storage_hint">A whole storage cannot be excluded: there would be nothing left to scan.</string>
+
+    <string name="settings_scan_title">What a scan looks at</string>
+    <string name="settings_min_size">Ignore files smaller than</string>
+    <string name="settings_min_size_off">Nothing</string>
+    <string name="settings_large_title">Large files</string>
+    <string name="settings_large_text">Files over %1$s count as large.</string>
+    <string name="settings_stale_text">A large file untouched for %1$s days is suggested.</string>
+    <string name="settings_scan_note">The next scan works with these.</string>
+
+    <string name="settings_background_title">In the background</string>
+    <string name="settings_background_text">Bring the index up to date once a day, so that suggestions are ready when you open the app. This uses battery.</string>
+    <string name="settings_background_switch">Index in the background</string>
+
+    <string name="settings_appearance_title">Appearance</string>
+    <string name="settings_theme_system">System</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+
+    <!-- What came of a decision about the exclusions -->
+    <string name="settings_msg_excluded">Excluded. Nothing below that folder is scanned or suggested.</string>
+    <string name="settings_msg_already">That lies in a folder that is excluded already.</string>
+    <string name="settings_msg_gone">That folder is no longer there.</string>
+    <string name="settings_msg_whole">A whole storage cannot be excluded.</string>
+    <string name="whitelist_kind_folder">Folder, with everything below it</string>
+    <string name="whitelist_kind_file">File</string>
+    <string name="settings_stale_label">Days without a change</string>
+    <string name="settings_msg_removed">No longer excluded. The next scan offers it again.</string>
+</resources>

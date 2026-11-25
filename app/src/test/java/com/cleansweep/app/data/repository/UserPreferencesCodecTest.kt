@@ -2,6 +2,7 @@ package com.cleansweep.app.data.repository
 
 import androidx.datastore.preferences.core.MutablePreferences
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.mutablePreferencesOf
@@ -11,6 +12,7 @@ import com.cleansweep.app.data.repository.UserPreferencesCodec.toUserPreferences
 import com.cleansweep.app.domain.model.ThemeMode
 import com.cleansweep.app.domain.model.UserPreferences
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Test
 
 class UserPreferencesCodecTest {
@@ -21,6 +23,7 @@ class UserPreferencesCodecTest {
     private val largeThreshold = longPreferencesKey("large_file_threshold_bytes")
     private val staleDays = intPreferencesKey("large_file_stale_days")
     private val themeMode = stringPreferencesKey("theme_mode")
+    private val backgroundIndexing = booleanPreferencesKey("background_indexing")
 
     @Test
     fun `an empty store yields the PRD defaults`() {
@@ -29,6 +32,7 @@ class UserPreferencesCodecTest {
         assertEquals(UserPreferences(), defaults)
         assertEquals(50L * 1024 * 1024, defaults.largeFileThresholdBytes)
         assertEquals(90, defaults.largeFileStaleDays)
+        assertFalse("Background indexing is off until the user turns it on", defaults.backgroundIndexing)
     }
 
     @Test
@@ -38,9 +42,11 @@ class UserPreferencesCodecTest {
             largeFileThresholdBytes = 200L * 1024 * 1024,
             largeFileStaleDays = 30,
             themeMode = ThemeMode.DARK,
+            backgroundIndexing = true,
         )
 
         assertEquals(expected, expected.toPreferences().toUserPreferences())
+        assertEquals(true, expected.toPreferences()[backgroundIndexing])
     }
 
     @Test
@@ -51,6 +57,7 @@ class UserPreferencesCodecTest {
         assertEquals(UserPreferences().largeFileThresholdBytes, partial.largeFileThresholdBytes)
         assertEquals(UserPreferences().largeFileStaleDays, partial.largeFileStaleDays)
         assertEquals(UserPreferences().themeMode, partial.themeMode)
+        assertEquals(UserPreferences().backgroundIndexing, partial.backgroundIndexing)
     }
 
     @Test

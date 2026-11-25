@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import com.cleansweep.app.di.ApplicationScope
+import com.cleansweep.app.data.scanner.BackgroundIndexing
 import com.cleansweep.app.domain.scanner.trash.TrashManager
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
@@ -20,6 +21,9 @@ class CleanSweepApp : Application(), Configuration.Provider {
     lateinit var trashManager: TrashManager
 
     @Inject
+    lateinit var backgroundIndexing: BackgroundIndexing
+
+    @Inject
     @ApplicationScope
     lateinit var applicationScope: CoroutineScope
 
@@ -28,6 +32,8 @@ class CleanSweepApp : Application(), Configuration.Provider {
         // Every start brings the Safe Trash manifest back in step with storage and purges what has expired. The
         // recurring purge in WorkManager does the same in between, but may run late.
         applicationScope.launch { trashManager.maintain() }
+        // The daily scan in the background follows its setting from here on.
+        backgroundIndexing.start(applicationScope)
     }
 
     /**

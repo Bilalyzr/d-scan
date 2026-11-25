@@ -7,12 +7,16 @@ import com.cleansweep.app.data.scanner.AndroidInstalledApkOracle
 import com.cleansweep.app.data.scanner.AndroidMimeTypeResolver
 import com.cleansweep.app.data.scanner.AndroidStorageAccess
 import com.cleansweep.app.data.scanner.AndroidStorageRootsProvider
+import com.cleansweep.app.data.scanner.BackgroundIndexing
+import com.cleansweep.app.data.scanner.BackgroundIndexingScheduler
+import com.cleansweep.app.data.scanner.NioFolderLister
 import com.cleansweep.app.data.scanner.AndroidStorageSpaceReader
 import com.cleansweep.app.data.scanner.NioFileMetadataReader
 import com.cleansweep.app.domain.repository.FileIndexRepository
 import com.cleansweep.app.domain.repository.SettingsRepository
 import com.cleansweep.app.domain.repository.SuggestionRepository
 import com.cleansweep.app.domain.repository.WhitelistRepository
+import com.cleansweep.app.domain.scanner.FolderLister
 import com.cleansweep.app.domain.scanner.HardLinkReader
 import com.cleansweep.app.domain.scanner.ScanControl
 import com.cleansweep.app.domain.scanner.ScanController
@@ -199,4 +203,21 @@ object ScannerModule {
     @Provides
     @Singleton
     fun provideScanControl(controller: ScanController): ScanControl = controller
+
+    @Provides
+    @Singleton
+    fun provideFolderLister(): FolderLister = NioFolderLister()
+
+    @Provides
+    @Singleton
+    fun provideBackgroundIndexingScheduler(
+        @ApplicationContext context: Context,
+    ): BackgroundIndexingScheduler = BackgroundIndexingScheduler(context)
+
+    @Provides
+    @Singleton
+    fun provideBackgroundIndexing(
+        settings: SettingsRepository,
+        scheduler: BackgroundIndexingScheduler,
+    ): BackgroundIndexing = BackgroundIndexing(settings, scheduler)
 }
