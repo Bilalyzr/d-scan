@@ -4,9 +4,11 @@ Offline-first Android storage scanner, exact-duplicate finder, junk cleaner and 
 Android 10 and newer. Everything runs on the device: the app cannot request the `INTERNET` permission, by
 construction, and a test fails the build if it ever does.
 
-**Status: Phase 1 of 4.** Project setup, manifest and permissions, the complete Room database layer and its
-repositories, dependency injection, and tests. There is no scanning engine or real UI yet; the app opens a
-bootstrap screen that shows live aggregates from the database.
+**Status: Phase 2 of 4.** The foundation and data layer (Phase 1) and the scanning engine (Phase 2) are built:
+the 3-stage duplicate finder, the incremental scanner, the junk detectors, the Original Lock policy and the
+confidence scoring, with a scan service that reports progress and pauses, resumes and cancels. Nothing has been
+run on an Android device yet, and the engine cannot be started from the app: the real screens are Phase 4, so the
+app still opens a bootstrap screen that shows live aggregates from the database.
 
 The decisions behind the code are in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
@@ -21,12 +23,13 @@ The decisions behind the code are in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md
 ## Build and test
 
 ```bash
-./gradlew assembleDebug              # debug APK
-./gradlew assembleRelease            # release APK, minified, unsigned
-./gradlew bundleRelease              # release app bundle, minified, unsigned
-./gradlew testDebugUnitTest          # JVM tests, including Room DAO and repository tests through Robolectric
-./gradlew lintDebug                  # Android lint
-./gradlew connectedDebugAndroidTest  # on-device smoke test; needs a device or emulator
+./gradlew assembleDebug                   # debug APK
+./gradlew assembleRelease                 # release APK, minified, unsigned
+./gradlew bundleRelease                   # release app bundle, minified, unsigned
+./gradlew testDebugUnitTest               # JVM tests, including whole scans over real files through Robolectric
+./gradlew compileDebugAndroidTestKotlin   # compiles the on-device tests; nothing else does
+./gradlew lintDebug                       # Android lint
+./gradlew connectedDebugAndroidTest       # on-device tests; needs a device or emulator
 ```
 
 Use `gradlew.bat` on Windows.
@@ -70,14 +73,16 @@ These messages are expected and do not affect the result:
 | `app/src/main/java/com/cleansweep/app/ui` | Material 3 theme and the temporary bootstrap screen. |
 | `app/src/main/res/xml/backup_rules.xml`, `data_extraction_rules.xml` | Exclude all app data from backup on Android 11 and lower, and from cloud backup and device transfer on Android 12 and newer. |
 | `app/schemas` | Exported Room schemas. Commit them. |
-| `app/src/test` | Unit and Robolectric tests. |
-| `app/src/androidTest` | On-device smoke test. |
+| `app/src/main/java/com/cleansweep/app/domain/scanner` | The scanning engine: walker, hashing, duplicate pipeline, junk detectors, Original Lock policy, confidence scoring, scan service. Plain Kotlin. |
+| `app/src/main/java/com/cleansweep/app/data/scanner` | The engine's Android adapters: storage volumes, storage access, MIME types, link counts, device state, installed packages, background worker. |
+| `app/src/test` | Unit tests and whole scans over real files, through Robolectric. |
+| `app/src/androidTest` | On-device tests: the schema on real SQLite, and one scan on real storage. |
 
 ## Phases
 
 | Phase | Scope | State |
 | --- | --- | --- |
 | 1 | Project structure, Gradle, manifest, Room layer, repositories | done |
-| 2 | 3-stage duplicate hashing engine, incremental scanner, junk detectors, confidence scoring | next |
-| 3 | Safe Trash manager, whitelist UI support | planned |
+| 2 | 3-stage duplicate hashing engine, incremental scanner, junk detectors, Original Lock policy, confidence scoring, scan service | done, tested on the JVM only |
+| 3 | Safe Trash manager, whitelist UI support | next |
 | 4 | The eight Material 3 screens and their ViewModels | planned |

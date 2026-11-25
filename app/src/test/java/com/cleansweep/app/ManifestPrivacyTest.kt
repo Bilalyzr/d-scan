@@ -35,7 +35,9 @@ class ManifestPrivacyTest {
     ).map { it to "." }.toSet()
 
     // AGP runs unit tests with the module directory as the working directory.
-    private val moduleDir: File = File(System.getProperty("user.dir"))
+    private val moduleDir: File = File(
+        requireNotNull(System.getProperty("user.dir")) { "The working directory is not set for this test JVM" },
+    )
 
     private fun packagedManifest(): File {
         val candidates = File(moduleDir, "build/intermediates/packaged_manifests")
