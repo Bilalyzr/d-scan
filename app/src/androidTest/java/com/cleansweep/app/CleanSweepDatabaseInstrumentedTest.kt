@@ -30,7 +30,8 @@ class CleanSweepDatabaseInstrumentedTest {
     @Test
     fun schemaOpensAndSuggestionsFollowTheirFile() = runBlocking {
         val context = ApplicationProvider.getApplicationContext<Context>()
-        Room.inMemoryDatabaseBuilder(context, CleanSweepDatabase::class.java).build().use { database ->
+        val database = Room.inMemoryDatabaseBuilder(context, CleanSweepDatabase::class.java).build()
+        try {
             val fileIndexDao = database.fileIndexDao()
             val suggestionDao = database.suggestionItemDao()
 
@@ -43,6 +44,8 @@ class CleanSweepDatabaseInstrumentedTest {
 
             assertNull(fileIndexDao.getByPath("/storage/emulated/0/Download/notes.pdf"))
             assertEquals(0, suggestionDao.observeActiveCount().first())
+        } finally {
+            database.close()
         }
     }
 
