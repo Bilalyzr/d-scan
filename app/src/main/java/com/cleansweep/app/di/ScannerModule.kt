@@ -7,16 +7,19 @@ import com.cleansweep.app.data.scanner.AndroidInstalledApkOracle
 import com.cleansweep.app.data.scanner.AndroidMimeTypeResolver
 import com.cleansweep.app.data.scanner.AndroidStorageAccess
 import com.cleansweep.app.data.scanner.AndroidStorageRootsProvider
+import com.cleansweep.app.data.scanner.AndroidStorageSpaceReader
 import com.cleansweep.app.data.scanner.NioFileMetadataReader
 import com.cleansweep.app.domain.repository.FileIndexRepository
 import com.cleansweep.app.domain.repository.SettingsRepository
 import com.cleansweep.app.domain.repository.SuggestionRepository
 import com.cleansweep.app.domain.repository.WhitelistRepository
 import com.cleansweep.app.domain.scanner.HardLinkReader
+import com.cleansweep.app.domain.scanner.ScanControl
 import com.cleansweep.app.domain.scanner.ScanController
 import com.cleansweep.app.domain.scanner.ScanRunner
 import com.cleansweep.app.domain.scanner.StorageAccess
 import com.cleansweep.app.domain.scanner.StorageRootsProvider
+import com.cleansweep.app.domain.scanner.StorageSpaceReader
 import com.cleansweep.app.domain.scanner.SuggestionGuard
 import com.cleansweep.app.domain.scanner.duplicates.DuplicatePipeline
 import com.cleansweep.app.domain.scanner.hashing.DeviceStateReader
@@ -121,6 +124,11 @@ object ScannerModule {
 
     @Provides
     @Singleton
+    fun provideStorageSpaceReader(roots: StorageRootsProvider): StorageSpaceReader =
+        AndroidStorageSpaceReader(roots)
+
+    @Provides
+    @Singleton
     fun provideDeviceStateReader(
         @ApplicationContext context: Context,
     ): DeviceStateReader = AndroidDeviceStateReader(context)
@@ -186,4 +194,9 @@ object ScannerModule {
         storageAccess: StorageAccess,
         @ApplicationScope scope: CoroutineScope,
     ): ScanController = ScanController(runner, storageAccess, scope)
+
+    /** The screens get the scan service through its interface, so that a ViewModel can be tested with a fake. */
+    @Provides
+    @Singleton
+    fun provideScanControl(controller: ScanController): ScanControl = controller
 }

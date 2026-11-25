@@ -2,15 +2,53 @@
 <resources>
     <string name="app_name" translatable="false">CleanSweep</string>
 
-    <!-- Temporary Phase 1 bootstrap screen. Replaced by the real onboarding/dashboard in Phase 4. -->
-    <string name="bootstrap_subtitle">Data layer ready</string>
-    <string name="bootstrap_stat_indexed_files">Indexed files</string>
-    <string name="bootstrap_stat_whitelist_rules">Whitelist rules</string>
-    <string name="bootstrap_stat_trash_entries">Safe Trash entries</string>
-    <string name="bootstrap_stat_safe_to_clean">Safe to Clean</string>
-    <string name="bootstrap_stat_review_recommended">Review Recommended</string>
-    <plurals name="bootstrap_category_row">
-        <item quantity="one">%1$s: %2$d file</item>
-        <item quantity="other">%1$s: %2$d files</item>
+    <!-- Actions shared by several screens -->
+    <string name="action_back">Back</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_continue">Continue</string>
+    <string name="action_close">Close</string>
+    <string name="action_undo">Undo</string>
+    <string name="action_retry">Try again</string>
+    <string name="action_done">Done</string>
+    <string name="action_allow_access">Allow storage access</string>
+    <string name="action_not_now">Not now</string>
+    <string name="action_open_app_settings">Open app settings</string>
+    <string name="action_more_options">More options</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_suggestions">Suggestions</string>
+    <string name="nav_trash">Safe Trash</string>
+    <string name="nav_settings">Settings</string>
+
+    <!-- Storage access is off. Shown on every screen that needs it. -->
+    <string name="storage_access_off_title">Storage access is off</string>
+    <string name="storage_access_off_text">CleanSweep cannot see your files. Allow access to scan and to clean.</string>
+
+    <!-- Kinds of files -->
+    <string name="category_documents">Documents</string>
+    <string name="category_images">Images</string>
+    <string name="category_videos">Videos</string>
+    <string name="category_audio">Audio</string>
+    <string name="category_apk">App installers</string>
+    <string name="category_archives">Archives</string>
+    <string name="category_other">Other files</string>
+
+    <!-- How sure the app is that something may be removed -->
+    <string name="tier_safe_to_clean">Safe to clean</string>
+    <string name="tier_review_recommended">Review recommended</string>
+
+    <!-- Counts -->
+    <plurals name="item_count">
+        <item quantity="one">%1$s item</item>
+        <item quantity="other">%1$s items</item>
+    </plurals>
+    <plurals name="file_count">
+        <item quantity="one">%1$s file</item>
+        <item quantity="other">%1$s files</item>
+    </plurals>
+    <plurals name="copy_count">
+        <item quantity="one">%1$s copy</item>
+        <item quantity="other">%1$s copies</item>
     </plurals>
 </resources>

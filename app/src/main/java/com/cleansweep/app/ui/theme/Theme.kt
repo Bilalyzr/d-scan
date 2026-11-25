@@ -8,7 +8,25 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.platform.LocalContext
+import com.cleansweep.app.domain.model.ThemeMode
+
+/** Whether the app is being drawn in dark colours. The user's theme can differ from the system setting. */
+val LocalDarkTheme = staticCompositionLocalOf { false }
+
+/** Colours of the storage breakdown on the dashboard. */
+val LocalChartColors = staticCompositionLocalOf { LightChartColors }
+
+/** Whether this theme draws in dark colours. A null theme, before the settings were read, follows the system. */
+fun ThemeMode?.isDark(
+    systemIsDark: Boolean,
+): Boolean = when (this) {
+    null, ThemeMode.SYSTEM -> systemIsDark
+    ThemeMode.LIGHT -> false
+    ThemeMode.DARK -> true
+}
 
 private val LightColors = lightColorScheme(
     primary = PrimaryLight,
@@ -34,6 +52,17 @@ private val LightColors = lightColorScheme(
     surfaceVariant = SurfaceVariantLight,
     onSurfaceVariant = OnSurfaceVariantLight,
     outline = OutlineLight,
+    outlineVariant = OutlineVariantLight,
+    inverseSurface = InverseSurfaceLight,
+    inverseOnSurface = InverseOnSurfaceLight,
+    inversePrimary = InversePrimaryLight,
+    surfaceDim = SurfaceDimLight,
+    surfaceBright = SurfaceBrightLight,
+    surfaceContainerLowest = SurfaceContainerLowestLight,
+    surfaceContainerLow = SurfaceContainerLowLight,
+    surfaceContainer = SurfaceContainerLight,
+    surfaceContainerHigh = SurfaceContainerHighLight,
+    surfaceContainerHighest = SurfaceContainerHighestLight,
 )
 
 private val DarkColors = darkColorScheme(
@@ -60,27 +89,45 @@ private val DarkColors = darkColorScheme(
     surfaceVariant = SurfaceVariantDark,
     onSurfaceVariant = OnSurfaceVariantDark,
     outline = OutlineDark,
+    outlineVariant = OutlineVariantDark,
+    inverseSurface = InverseSurfaceDark,
+    inverseOnSurface = InverseOnSurfaceDark,
+    inversePrimary = InversePrimaryDark,
+    surfaceDim = SurfaceDimDark,
+    surfaceBright = SurfaceBrightDark,
+    surfaceContainerLowest = SurfaceContainerLowestDark,
+    surfaceContainerLow = SurfaceContainerLowDark,
+    surfaceContainer = SurfaceContainerDark,
+    surfaceContainerHigh = SurfaceContainerHighDark,
+    surfaceContainerHighest = SurfaceContainerHighestDark,
 )
 
 /**
- * Material 3 theme. [darkTheme] currently follows the system; Phase 4's Settings screen feeds it from the
- * user's theme preference instead. Android 12+ uses the wallpaper-derived dynamic palette.
+ * Material 3 theme. [darkTheme] follows the system unless the user chose a theme in Settings
+ * (see [isDark]). Android 12+ uses the wallpaper-derived dynamic palette unless [dynamicColor] is off, which is
+ * what leaves the brand palette showing.
  */
 @Composable
 fun CleanSweepTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
+    dynamicColor: Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S,
     content: @Composable () -> Unit,
 ) {
     val colorScheme = when {
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
         darkTheme -> DarkColors
         else -> LightColors
     }
-    MaterialTheme(
-        colorScheme = colorScheme,
-        content = content,
-    )
+    CompositionLocalProvider(
+        LocalDarkTheme provides darkTheme,
+        LocalChartColors provides if (darkTheme) DarkChartColors else LightChartColors,
+    ) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            content = content,
+        )
+    }
 }

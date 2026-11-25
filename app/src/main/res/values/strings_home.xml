@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Screen 2: Home dashboard -->
+    <string name="action_refresh">Refresh</string>
+
+    <string name="home_scan_device">Scan device</string>
+    <string name="home_scan_device_hint">Looks for duplicate files, junk, and large files you may have forgotten.</string>
+    <string name="home_scanning">Scanning</string>
+    <string name="home_view_progress">View progress</string>
+
+    <string name="home_storage_used_of">used of %1$s</string>
+    <string name="home_storage_free">%1$s free</string>
+    <string name="home_storage_unknown">The size of the storage could not be read.</string>
+    <string name="home_storage_gauge_description">Storage gauge: %1$s percent in use</string>
+    <string name="home_last_scanned">Last scanned %1$s</string>
+    <string name="home_never_scanned">Not scanned yet</string>
+    <plurals name="home_files_indexed">
+        <item quantity="one">%1$s file indexed</item>
+        <item quantity="other">%1$s files indexed</item>
+    </plurals>
+
+    <string name="home_breakdown_title">Where the scanned files are</string>
+    <string name="home_breakdown_note">Only files CleanSweep has scanned are counted. Space used by apps themselves and by the system is not included.</string>
+    <string name="home_breakdown_empty">Scan your device to see what takes up space.</string>
+
+    <string name="home_reclaimable_title">Space you could free</string>
+    <string name="home_tier_size">%1$s in %2$s</string>
+    <string name="home_reclaimable_empty">Scan your device to find out what can go.</string>
+    <string name="home_reclaimable_none">Nothing to clean was found. Scan again after using your phone for a while.</string>
+    <string name="home_review_suggestions">Review suggestions</string>
+
+    <string name="home_trash_title">Safe Trash</string>
+    <string name="home_trash_empty">Empty. Files you remove are kept here for 30 days.</string>
+    <string name="home_trash_summary">%1$s in %2$s, kept for up to 30 days</string>
+
+    <!-- How the last scan ended -->
+    <string name="home_scan_finished_title">Scan finished</string>
+    <plurals name="home_scan_finished_text">
+        <item quantity="one">%1$s scanned in %2$s file.</item>
+        <item quantity="other">%1$s scanned in %2$s files.</item>
+    </plurals>
+    <plurals name="home_scan_errors">
+        <item quantity="one">%1$s file or folder could not be read.</item>
+        <item quantity="other">%1$s files or folders could not be read.</item>
+    </plurals>
+    <string name="home_scan_cancelled_title">Scan cancelled</string>
+    <string name="home_scan_cancelled_text">What was found up to then is kept.</string>
+    <string name="home_scan_failed_no_storage_title">Nothing to scan</string>
+    <string name="home_scan_failed_no_storage_text">No storage was found. Check that the storage of your phone is available.</string>
+    <string name="home_scan_failed_unexpected_title">The scan could not finish</string>
+    <string name="home_scan_failed_unexpected_text">Try again. A scan gets past files it cannot read, so the next one may go further.</string>
+</resources>

@@ -88,6 +88,12 @@ interface FileIndexRepository {
 
     fun observeDuplicateGroups(): Flow<List<DuplicateGroup>>
 
+    /**
+     * Every indexed copy of the content with [fullHash], oldest first, whether or not they are still two. For
+     * looking at one group when the user decides to keep another copy.
+     */
+    suspend fun getCopiesWithHash(fullHash: String): List<IndexedFile>
+
     // ---- Original Lock ----
 
     /**
@@ -101,6 +107,9 @@ interface FileIndexRepository {
     fun observeFileCount(): Flow<Int>
 
     fun observeCategoryTotals(): Flow<List<CategoryTotal>>
+
+    /** When a scan last wrote to the index, or null while nothing has been indexed. */
+    fun observeLastScanTimestamp(): Flow<Long?>
 
     // ---- Junk detection ----
 

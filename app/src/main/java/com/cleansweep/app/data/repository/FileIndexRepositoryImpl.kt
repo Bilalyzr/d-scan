@@ -142,11 +142,16 @@ class FileIndexRepositoryImpl @Inject constructor(
     override fun observeDuplicateGroups(): Flow<List<DuplicateGroup>> =
         fileIndexDao.observeDuplicateFiles().map { it.toDuplicateGroups() }
 
+    override suspend fun getCopiesWithHash(fullHash: String): List<IndexedFile> =
+        fileIndexDao.getCopiesWithHash(fullHash).map(FileIndexEntity::toDomain)
+
     override suspend fun setOriginalLocked(fileId: Long, locked: Boolean) {
         fileIndexDao.setOriginalLocked(fileId, locked)
     }
 
     override fun observeFileCount(): Flow<Int> = fileIndexDao.observeFileCount()
+
+    override fun observeLastScanTimestamp(): Flow<Long?> = fileIndexDao.observeLastScanTimestamp()
 
     override fun observeCategoryTotals(): Flow<List<CategoryTotal>> =
         fileIndexDao.observeCategoryTotals().map { rows ->

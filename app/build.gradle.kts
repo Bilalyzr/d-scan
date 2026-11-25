@@ -80,6 +80,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.material.icons.core)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 
@@ -103,6 +104,13 @@ dependencies {
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.androidx.datastore.preferences)
 
+    // Screens: navigation, image previews (Coil), video and audio preview (Media3). PDF and text previews use
+    // the platform's PdfRenderer and plain file reads.
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.coil.compose)
+    implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.media3.ui)
+
     // JVM unit tests (Robolectric runs the Room DAOs against the merged manifest)
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
@@ -110,6 +118,10 @@ dependencies {
     testImplementation(libs.androidx.work.testing)
     testImplementation(libs.androidx.test.core)
     testImplementation(libs.androidx.test.ext.junit)
+    // Compose UI tests on the JVM: Robolectric renders the screens, so they can be clicked through and captured
+    // as images without a device.
+    testImplementation(platform(libs.androidx.compose.bom))
+    testImplementation(libs.androidx.compose.ui.test.junit4)
 
     // Instrumented tests (need a device or emulator)
     androidTestImplementation(libs.androidx.test.ext.junit)

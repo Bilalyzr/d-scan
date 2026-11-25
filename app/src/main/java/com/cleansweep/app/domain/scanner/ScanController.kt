@@ -48,7 +48,7 @@ class ScanController(
     private val storageAccess: StorageAccess,
     private val scope: CoroutineScope,
     private val nowMillis: () -> Long = { System.nanoTime() / 1_000_000 },
-) {
+) : ScanControl {
     private val lock = Any()
 
     @Volatile
@@ -61,9 +61,9 @@ class ScanController(
     private var lastPublishedAt = 0L
 
     private val _state = MutableStateFlow<ScanState>(ScanState.Idle)
-    val state: StateFlow<ScanState> = _state.asStateFlow()
+    override val state: StateFlow<ScanState> = _state.asStateFlow()
 
-    val isRunning: Boolean
+    override val isRunning: Boolean
         get() = synchronized(lock) { job?.isActive == true }
 
     /**
@@ -73,7 +73,7 @@ class ScanController(
      *   case the state becomes [ScanState.Failed] with [ScanFailure.STORAGE_PERMISSION_MISSING]: the caller has
      *   to show the prominent disclosure first and send the user to the system settings.
      */
-    fun start(request: ScanRequest = ScanRequest()): Boolean {
+    override fun start(request: ScanRequest): Boolean {
         synchronized(lock) {
             if (job?.isActive == true) {
                 return false
@@ -117,9 +117,9 @@ class ScanController(
     }
 
     /** Makes the scan wait where it is. Nothing is undone; [resume] carries on from the next entry. */
-    fun pause(): Boolean = setPaused(paused = true)
+    override fun pause(): Boolean = setPaused(paused = true)
 
-    fun resume(): Boolean = setPaused(paused = false)
+    override fun resume(): Boolean = setPaused(paused = false)
 
     private fun setPaused(paused: Boolean): Boolean {
         synchronized(lock) {
@@ -134,7 +134,7 @@ class ScanController(
     }
 
     /** Stops the scan. The state becomes [ScanState.Cancelled] once the scan has come to a halt. */
-    fun cancel(): Boolean {
+    override fun cancel(): Boolean {
         synchronized(lock) {
             val running = job
             if (running?.isActive != true) {
@@ -146,7 +146,7 @@ class ScanController(
     }
 
     /** Goes back to [ScanState.Idle] once no scan is running, to put the last result away. */
-    fun reset() {
+    override fun reset() {
         synchronized(lock) {
             if (job?.isActive != true) {
                 _state.value = ScanState.Idle

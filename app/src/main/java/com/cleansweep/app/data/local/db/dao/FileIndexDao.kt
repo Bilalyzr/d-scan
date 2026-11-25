@@ -22,6 +22,13 @@ WHERE f.is_directory = 0 AND f.full_hash IS NOT NULL
 ORDER BY f.full_hash, f.last_modified, f.path
 """
 
+/** Every indexed copy of one content hash, oldest first. */
+private const val COPIES_WITH_HASH_QUERY = """
+SELECT * FROM file_index
+WHERE full_hash = :fullHash AND is_directory = 0
+ORDER BY last_modified, path
+"""
+
 @Dao
 interface FileIndexDao {
 
@@ -156,6 +163,10 @@ interface FileIndexDao {
     @Query(DUPLICATE_FILES_QUERY)
     fun observeDuplicateFiles(): Flow<List<FileIndexEntity>>
 
+    /** The copies of one exact content, whether or not there are two of them by now. */
+    @Query(COPIES_WITH_HASH_QUERY)
+    suspend fun getCopiesWithHash(fullHash: String): List<FileIndexEntity>
+
     // ---- Dashboard aggregates ----
 
     /**
@@ -194,6 +205,10 @@ interface FileIndexDao {
         """,
     )
     fun observeCategoryTotals(): Flow<List<CategoryTotalRow>>
+
+    /** When a scan last wrote to the index, or null when nothing has been indexed yet. */
+    @Query("SELECT MAX(scan_timestamp) FROM file_index")
+    fun observeLastScanTimestamp(): Flow<Long?>
 
     @Query("DELETE FROM file_index")
     suspend fun deleteAll(): Int

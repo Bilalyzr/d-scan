@@ -3,4 +3,6 @@
     <color name="ic_launcher_background">#0B3B33</color>
     <!-- Shown until Compose draws its first frame. -->
     <color name="window_background">#F7FBF9</color>
+    <!-- The same, for when the app draws in dark colours while the system is in light mode. -->
+    <color name="window_background_dark">#0B1512</color>
 </resources>

@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Environment
+import android.os.StatFs
 import android.os.storage.StorageManager
 import android.os.storage.StorageVolume
 import android.system.ErrnoException
@@ -14,6 +15,8 @@ import androidx.core.content.ContextCompat
 import com.cleansweep.app.domain.scanner.HardLinkReader
 import com.cleansweep.app.domain.scanner.StorageAccess
 import com.cleansweep.app.domain.scanner.StorageRootsProvider
+import com.cleansweep.app.domain.scanner.StorageSpaceReader
+import com.cleansweep.app.domain.scanner.VolumeSpace
 import com.cleansweep.app.domain.scanner.walker.MimeTypeResolver
 import com.cleansweep.app.domain.util.StoragePaths
 import java.io.File
@@ -77,9 +80,28 @@ class AndroidStorageAccess(
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             Environment.isExternalStorageManager()
         } else {
-            ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE) ==
-                PackageManager.PERMISSION_GRANTED
+        ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE) ==
+            PackageManager.PERMISSION_GRANTED
         }
+}
+
+/**
+ * [StorageSpaceReader] on `StatFs`, for the same volumes a scan would walk. The free space is what any app may
+ * still use, not counting the part the system keeps to itself.
+ */
+class AndroidStorageSpaceReader(
+    private val roots: StorageRootsProvider,
+) : StorageSpaceReader {
+
+    override fun volumes(): List<VolumeSpace> = roots.roots().mapNotNull { root ->
+        try {
+            val stats = StatFs(root)
+            VolumeSpace(root = root, totalBytes = stats.totalBytes, freeBytes = stats.availableBytes)
+        } catch (rejected: IllegalArgumentException) {
+            // The volume went away between the two calls. It is simply not measured this time.
+            null
+        }
+    }
 }
 
 /** [MimeTypeResolver] on the platform's table of extensions. Unknown extensions give null. */
