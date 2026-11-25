@@ -37,7 +37,6 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -60,14 +59,16 @@ import com.cleansweep.app.R
 import com.cleansweep.app.domain.model.Suggestion
 import com.cleansweep.app.domain.model.SuggestionCategory
 import com.cleansweep.app.domain.model.SuggestionTier
+import com.cleansweep.app.ui.clean.movedMessage
 import com.cleansweep.app.domain.model.TierTotal
 import com.cleansweep.app.domain.scanner.duplicates.AutoSelectRule
-import com.cleansweep.app.domain.scanner.trash.Refusal
-import com.cleansweep.app.domain.scanner.trash.TrashRefusal
+import com.cleansweep.app.ui.clean.CleanBar
 import com.cleansweep.app.ui.clean.CleanConfirmationSheet
 import com.cleansweep.app.ui.clean.CleanOutcome
 import com.cleansweep.app.ui.clean.countedByReason
 import com.cleansweep.app.ui.clean.label
+import com.cleansweep.app.ui.clean.refusedMessage
+import com.cleansweep.app.ui.clean.restoredMessage
 import com.cleansweep.app.ui.common.AppIcons
 import com.cleansweep.app.ui.common.EmptyState
 import com.cleansweep.app.ui.common.NoticeCard
@@ -167,11 +168,7 @@ private fun Messages(
                 }
 
                 is HubEvent.Restored -> messages.showSnackbar(
-                    message = resources.getQuantityString(
-                        R.plurals.hub_msg_restored,
-                        event.count,
-                        formatCount(event.count.toLong()),
-                    ),
+                    message = resources.restoredMessage(event.count),
                     duration = SnackbarDuration.Short,
                 )
 
@@ -210,39 +207,6 @@ private fun Messages(
             }
         }
     }
-}
-
-private fun Resources.movedMessage(
-    outcome: CleanOutcome,
-): String = when (outcome.moved.size) {
-    0 -> getString(R.string.hub_msg_nothing_moved)
-    1 -> getString(R.string.hub_msg_moved_one, formatBytes(outcome.bytes))
-    else -> getString(
-        R.string.hub_msg_moved_many,
-        formatCount(outcome.moved.size.toLong()),
-        formatBytes(outcome.bytes),
-    )
-}
-
-/** `2 files not moved: 1 changed since the scan, 1 on storage the app cannot write to`. */
-private fun Resources.refusedMessage(
-    refusals: List<Refusal>,
-): String {
-    val reasons = refusals.countedByReason().joinToString { (reason, count) ->
-        formatCount(count.toLong()) + " " + getString(reason.labelRes())
-    }
-    return getString(R.string.hub_msg_not_moved, formatCount(refusals.size.toLong()), reasons)
-}
-
-private fun TrashRefusal.labelRes(): Int = when (this) {
-    TrashRefusal.NOT_INDEXED -> R.string.refusal_not_indexed
-    TrashRefusal.NOT_SUGGESTED -> R.string.refusal_not_suggested
-    TrashRefusal.WHITELISTED -> R.string.refusal_whitelisted
-    TrashRefusal.PROTECTED_ORIGINAL -> R.string.refusal_protected_original
-    TrashRefusal.CHANGED_SINCE_SUGGESTED -> R.string.refusal_changed
-    TrashRefusal.GONE -> R.string.refusal_gone
-    TrashRefusal.STORAGE_READ_ONLY -> R.string.refusal_read_only
-    TrashRefusal.COULD_NOT_MOVE -> R.string.refusal_could_not_move
 }
 
 private fun Resources.ruleMessage(
@@ -396,7 +360,7 @@ internal fun SuggestionsContent(
         snackbarHost = { SnackbarHost(messages) },
         bottomBar = {
             if (state.selected.isNotEmpty()) {
-                CleanBar(state = state, onRequestClean = onRequestClean)
+                CleanBar(selectedCount = state.selected.size, bytes = state.summary.bytes, enabled = state.canClean, onRequestClean = onRequestClean)
             }
         },
         containerColor = MaterialTheme.colorScheme.background,
@@ -552,41 +516,6 @@ private fun SummaryBanner(
                     ),
                     style = MaterialTheme.typography.bodyMedium,
                 )
-            }
-        }
-    }
-}
-
-/** The sticky bar: how much is marked, and the way to Safe Trash (PRD screen 4: "Clean Selected"). */
-@Composable
-private fun CleanBar(
-    state: HubUiState,
-    onRequestClean: () -> Unit,
-) {
-    Surface(tonalElevation = 3.dp) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            Icon(Icons.Filled.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-            Column(Modifier.weight(1f)) {
-                Text(
-                    text = pluralStringResource(
-                        R.plurals.hub_selected,
-                        state.selected.size,
-                        formatCount(state.selected.size.toLong()),
-                    ),
-                    style = MaterialTheme.typography.titleSmall,
-                )
-                Text(
-                    text = formatBytes(state.summary.bytes),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            Button(onClick = onRequestClean, enabled = state.canClean) {
-                Text(stringResource(R.string.hub_move_to_trash_sized, formatBytes(state.summary.bytes)))
             }
         }
     }

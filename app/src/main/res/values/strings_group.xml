@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Screen 5: one group of identical files -->
+    <string name="group_title">Identical files</string>
+    <plurals name="group_copies">
+        <item quantity="one">%1$s copy</item>
+        <item quantity="other">%1$s copies</item>
+    </plurals>
+    <string name="group_reclaim">%1$s can be freed</string>
+    <string name="group_size_line">%1$s · %2$s each</string>
+    <string name="group_every_copy_kept">Every copy is kept. Keep another copy instead to offer this one.</string>
+    <string name="group_identical_note">These files are the same down to the last byte. Removing a copy loses nothing: the kept copy stays.</string>
+    <string name="group_gone_title">These files are no longer identical copies</string>
+    <string name="group_gone_text">A file was changed, moved or removed since the scan. Scan again to see how things are now.</string>
+
+    <string name="group_tick_by_rule">Tick by rule</string>
+    <string name="group_compare_title">Compare</string>
+    <string name="group_column_original">Kept copy</string>
+    <string name="group_column_copy">Copy %1$d</string>
+
+    <string name="group_tag_original">Kept copy</string>
+    <string name="group_tag_kept_by_you">Kept by you</string>
+    <string name="group_tag_ignored">Ignored</string>
+    <string name="group_tag_review">Review</string>
+    <string name="group_keep_button">Keep this copy</string>
+    <string name="group_preview">Preview</string>
+    <string name="group_more">More actions</string>
+    <string name="group_ignore">Ignore the suggestion for this copy</string>
+    <string name="group_unignore">Stop ignoring this copy</string>
+    <string name="group_mark">Mark this copy for deletion</string>
+    <string name="group_original_hint">Kept by the group\'s rule. Keep another copy to offer this one.</string>
+    <string name="group_kept_hint">Kept by you. It stays, whatever the rule would pick.</string>
+
+    <string name="file_path">Path</string>
+    <string name="file_size">Size</string>
+    <string name="file_modified">Modified</string>
+    <string name="file_created">Created</string>
+    <string name="file_created_unknown">not known</string>
+    <string name="file_folder">Folder</string>
+    <string name="file_copied">Copied</string>
+    <string name="file_copy_path">Copy the path</string>
+
+    <plurals name="group_selected">
+        <item quantity="one">1 selected</item>
+        <item quantity="other">%1$s selected</item>
+    </plurals>
+
+    <!-- What came of an action on the group -->
+    <string name="group_msg_kept">This copy is kept now. The copy that was kept until then is offered.</string>
+    <string name="group_msg_released">No longer kept by you. The group keeps a copy by its usual rule.</string>
+    <string name="group_msg_kept_by_rule">This copy is kept by the group\'s rule. Keep another copy first to offer it.</string>
+    <string name="group_msg_could_not_change">The group could not be changed. Scan again and try once more.</string>
+    <string name="group_msg_rule_oldest">Ticked every copy but the oldest</string>
+    <string name="group_msg_rule_newest">Ticked every copy but the newest</string>
+    <string name="group_msg_rule_shortest">Ticked every copy but the one with the shortest path</string>
+    <string name="group_msg_rule_none">Unticked every copy</string>
+    <string name="group_msg_ignored">Suggestion ignored</string>
+    <string name="group_msg_unignored">Suggestion is back</string>
+</resources>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Screen 6: the preview of one file -->
+    <string name="preview_title">Preview</string>
+    <string name="preview_close">Close the preview</string>
+
+    <string name="preview_loading">Opening the file</string>
+    <string name="preview_failed_title">This file cannot be shown</string>
+    <string name="preview_failed_text">It may be damaged, or still being written. The file itself is not touched.</string>
+    <string name="preview_none_title">No preview for this kind of file</string>
+    <string name="preview_none_text">Its name, size and dates are all the app can tell about it.</string>
+    <string name="preview_image_description">The picture, pinch to zoom</string>
+    <string name="preview_gone_title">This file is no longer in the index</string>
+    <string name="preview_gone_text">It was moved, renamed or removed since the scan.</string>
+    <string name="preview_text_note">Showing the first %1$s</string>
+    <string name="preview_pdf_note">Showing the first pages of %1$s</string>
+    <string name="preview_audio">Playing audio</string>
+
+    <string name="preview_keep_copy">Keep this copy</string>
+    <string name="preview_keep_file">Keep this file</string>
+    <string name="preview_mark">Mark for deletion</string>
+    <string name="preview_original_hint">This is the copy its group keeps. Keep another copy to offer this one.</string>
+
+    <!-- What came of a decision -->
+    <string name="preview_msg_kept">Kept. The copy that was kept until now is offered instead.</string>
+    <string name="preview_msg_released">No longer kept by you. The group keeps a copy by its usual rule.</string>
+    <string name="preview_msg_kept_by_rule">This copy is kept by its group\'s rule. Keep another copy first to offer it.</string>
+    <string name="preview_msg_could_not_change">That could not be changed. Go back and try once more.</string>
+    <string name="preview_msg_ignored">This file will not be suggested again</string>
+    <string name="preview_msg_unignored">The suggestion is back</string>
+</resources>

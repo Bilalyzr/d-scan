@@ -76,6 +76,11 @@ internal class FakeFileIndexRepository : FileIndexRepository {
 
     override suspend fun getDuplicateGroups(): List<DuplicateGroup> = observeDuplicateGroups().first()
 
+    override fun observeCopiesWithHash(fullHash: String): Flow<List<IndexedFile>> = files.map { list ->
+        list.filter { it.fullHash == fullHash && !it.isDirectory }
+            .sortedWith(compareBy<IndexedFile>({ it.lastModified }, { it.path }))
+    }
+
     /** Worked out from the files, as the database works it out, so that a lock set through [setOriginalLocked] counts at once. */
     override fun observeDuplicateGroups(): Flow<List<DuplicateGroup>> = files.map { list ->
         val byHash = LinkedHashMap<String, MutableList<IndexedFile>>()

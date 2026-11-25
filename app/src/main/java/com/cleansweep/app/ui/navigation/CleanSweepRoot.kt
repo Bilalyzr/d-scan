@@ -23,8 +23,10 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.cleansweep.app.R
 import com.cleansweep.app.ui.common.AppIcons
+import com.cleansweep.app.ui.group.GroupScreen
 import com.cleansweep.app.ui.home.HomeScreen
 import com.cleansweep.app.ui.onboarding.OnboardingScreen
+import com.cleansweep.app.ui.preview.PreviewScreen
 import com.cleansweep.app.ui.scan.ScanScreen
 import com.cleansweep.app.ui.suggestions.SuggestionsScreen
 
@@ -106,8 +108,24 @@ fun CleanSweepRoot(
                     onScan = { navController.navigate(Routes.SCAN) },
                     onAllowAccess = { navController.navigate(Routes.ONBOARDING) },
                     onOpenGroup = { navController.navigate(Routes.group(it)) },
-                    onOpenFile = { },
+                    onOpenFile = { navController.navigate(Routes.preview(it)) },
                 )
+            }
+            composable(
+                route = Routes.GROUP,
+                arguments = listOf(navArgument(Routes.ARG_HASH) { type = NavType.StringType }),
+            ) {
+                GroupScreen(
+                    onBack = { navController.popBackStack() },
+                    onOpenFile = { navController.navigate(Routes.preview(it)) },
+                    onAllowAccess = { navController.navigate(Routes.ONBOARDING) },
+                )
+            }
+            composable(
+                route = Routes.PREVIEW,
+                arguments = listOf(navArgument(Routes.ARG_FILE_ID) { type = NavType.StringType }),
+            ) {
+                PreviewScreen(onClose = { navController.popBackStack() })
             }
         }
     }

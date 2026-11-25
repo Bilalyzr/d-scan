@@ -145,6 +145,9 @@ class FileIndexRepositoryImpl @Inject constructor(
     override suspend fun getCopiesWithHash(fullHash: String): List<IndexedFile> =
         fileIndexDao.getCopiesWithHash(fullHash).map(FileIndexEntity::toDomain)
 
+    override fun observeCopiesWithHash(fullHash: String): Flow<List<IndexedFile>> =
+        fileIndexDao.observeCopiesWithHash(fullHash).map { copies -> copies.map(FileIndexEntity::toDomain) }
+
     override suspend fun setOriginalLocked(fileId: Long, locked: Boolean) {
         fileIndexDao.setOriginalLocked(fileId, locked)
     }

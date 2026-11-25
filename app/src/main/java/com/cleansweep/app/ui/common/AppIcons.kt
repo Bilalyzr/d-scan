@@ -143,6 +143,13 @@ object AppIcons {
     val ArrowUpward: ImageVector by lazy {
         glyph("ArrowUpward", "M4,12l1.41,1.41L11,7.83V20h2V7.83l5.58,5.59L20,12l-8,-8 -8,8z")
     }
+    val Copy: ImageVector by lazy {
+        glyph(
+            "Copy",
+            "M16,1H4c-1.1,0 -2,0.9 -2,2v14h2V3h12V1zm3,4H8c-1.1,0 -2,0.9 -2,2v14c0,1.1 0.9,2 2,2h11c1.1,0 2,-0.9 2,-2V7" +
+                "c0,-1.1 -0.9,-2 -2,-2zm0,16H8V7h11v14z",
+        )
+    }
     val OpenInNew: ImageVector by lazy {
         glyph(
             "OpenInNew",

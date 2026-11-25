@@ -22,12 +22,16 @@ object Routes {
 
     /** One group of identical files. The hash identifies the content. */
     const val GROUP = "group/{hash}"
+
+    /** One file, shown as large as the screen allows before the user decides about it. */
+    const val PREVIEW = "preview/{fileId}"
     const val TRASH = "trash"
     const val SETTINGS = "settings"
 
     const val ARG_CATEGORY = "category"
     const val ARG_TYPE = "type"
     const val ARG_HASH = "hash"
+    const val ARG_FILE_ID = "fileId"
 
     fun suggestions(
         category: SuggestionCategory? = null,
@@ -37,4 +41,8 @@ object Routes {
     fun group(
         fullHash: String,
     ): String = "group/${Uri.encode(fullHash)}"
+
+    fun preview(
+        fileId: Long,
+    ): String = "preview/$fileId"
 }

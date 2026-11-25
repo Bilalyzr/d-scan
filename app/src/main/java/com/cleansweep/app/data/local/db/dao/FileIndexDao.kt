@@ -167,6 +167,10 @@ interface FileIndexDao {
     @Query(COPIES_WITH_HASH_QUERY)
     suspend fun getCopiesWithHash(fullHash: String): List<FileIndexEntity>
 
+    /** The same, watched: the screen of one group follows it while the user changes which copy is kept. */
+    @Query(COPIES_WITH_HASH_QUERY)
+    fun observeCopiesWithHash(fullHash: String): Flow<List<FileIndexEntity>>
+
     // ---- Dashboard aggregates ----
 
     /**

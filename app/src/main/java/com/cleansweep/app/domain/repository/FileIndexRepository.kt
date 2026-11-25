@@ -94,6 +94,9 @@ interface FileIndexRepository {
      */
     suspend fun getCopiesWithHash(fullHash: String): List<IndexedFile>
 
+    /** The same, watched: for the screen of one group, which follows it while the user keeps another copy. */
+    fun observeCopiesWithHash(fullHash: String): Flow<List<IndexedFile>>
+
     // ---- Original Lock ----
 
     /**
