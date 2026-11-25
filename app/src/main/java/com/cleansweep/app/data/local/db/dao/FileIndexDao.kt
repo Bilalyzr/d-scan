@@ -107,6 +107,10 @@ interface FileIndexDao {
     @Query("SELECT * FROM file_index WHERE path = :path")
     suspend fun getByPath(path: String): FileIndexEntity?
 
+    /** Callers keep each chunk of [ids] within [com.cleansweep.app.data.local.db.MAX_BIND_ARGS_PER_QUERY]. */
+    @Query("SELECT * FROM file_index WHERE id IN (:ids)")
+    suspend fun getByIds(ids: Collection<Long>): List<FileIndexEntity>
+
     // ---- 3-stage exact duplicate pipeline ----
 
     /**

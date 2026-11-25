@@ -64,6 +64,9 @@ interface FileIndexRepository {
 
     suspend fun getByPath(path: String): IndexedFile?
 
+    /** The rows with these ids; ids without a row are left out. */
+    suspend fun getByIds(ids: Collection<Long>): List<IndexedFile>
+
     fun observeById(id: Long): Flow<IndexedFile?>
 
     // ---- 3-stage exact duplicate pipeline ----

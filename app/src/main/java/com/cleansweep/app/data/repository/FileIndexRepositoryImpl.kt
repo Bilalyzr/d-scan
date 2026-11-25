@@ -107,6 +107,9 @@ class FileIndexRepositoryImpl @Inject constructor(
 
     override suspend fun getByPath(path: String): IndexedFile? = fileIndexDao.getByPath(path)?.toDomain()
 
+    override suspend fun getByIds(ids: Collection<Long>): List<IndexedFile> =
+        ids.distinct().chunked(MAX_BIND_ARGS_PER_QUERY).flatMap { fileIndexDao.getByIds(it) }.map { it.toDomain() }
+
     override fun observeById(id: Long): Flow<IndexedFile?> = fileIndexDao.observeById(id).map { it?.toDomain() }
 
     override suspend fun getSizeCollisionCandidates(minSizeBytes: Long): List<IndexedFile> =

@@ -2,8 +2,10 @@ package com.cleansweep.app.domain.scanner
 
 import com.cleansweep.app.domain.model.IndexedFile
 import com.cleansweep.app.domain.model.SuggestionCategory
+import com.cleansweep.app.domain.scanner.trash.TrashNaming
 import com.cleansweep.app.domain.scanner.walker.EmptyFolderRules
 import com.cleansweep.app.domain.scanner.walker.FileNames
+import com.cleansweep.app.domain.util.StoragePaths
 
 /** Why an item is kept out of the suggestions although a detector reported it. */
 enum class Rejection {
@@ -21,6 +23,9 @@ enum class Rejection {
 
     /** Other directory entries refer to the same stored content, so deleting this one frees no space. */
     HARD_LINKED,
+
+    /** The entry lies in Safe Trash already. The walker leaves such entries alone; this is the second lock. */
+    IN_TRASH,
 }
 
 /**
@@ -40,6 +45,8 @@ class SuggestionGuard(
         linkCount: Int = 1,
     ): Rejection? = when {
         file.isOriginalLocked -> Rejection.LOCKED_ORIGINAL
+
+        TrashNaming.isTrashedName(StoragePaths.nameOf(file.path)) -> Rejection.IN_TRASH
 
         // Hidden content is offered only as temporary junk. A hidden `.log` or a thumbnail cache is litter
         // whoever put it there; a hidden duplicate, large file or 0-byte file (think of `.nomedia`) is not.

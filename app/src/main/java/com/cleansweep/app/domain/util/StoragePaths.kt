@@ -38,4 +38,25 @@ object StoragePaths {
         val prefix = descendantPrefix(root)
         return path == root.trimEnd('/') || path.startsWith(prefix)
     }
+
+    /** The last segment of [path]: the entry's own name. */
+    fun nameOf(path: String): String = path.trimEnd('/').substringAfterLast('/')
+
+    /** The folder that holds [path], or null when nothing lies above it. */
+    fun parentOf(path: String): String? {
+        val trimmed = path.trimEnd('/')
+        val separator = trimmed.lastIndexOf('/')
+        if (separator < 0) {
+            return null
+        }
+        // On Android a path starts at "/". On a Windows test host it starts at "C:/", whose root ends with the slash.
+        val rootEndsAtSeparator = separator == 0 || (separator == 2 && trimmed[1] == ':')
+        return if (rootEndsAtSeparator) trimmed.substring(0, separator + 1) else trimmed.substring(0, separator)
+    }
+
+    /** [parent] and [name] joined with exactly one separator. */
+    fun join(
+        parent: String,
+        name: String,
+    ): String = if (parent.endsWith("/")) "$parent$name" else "$parent/$name"
 }

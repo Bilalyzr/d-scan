@@ -89,6 +89,10 @@ interface SuggestionItemDao {
     @Query("SELECT file_id FROM suggestion_items WHERE is_dismissed = 1")
     suspend fun getDismissedFileIds(): List<Long>
 
+    /** Of [fileIds], the ones that currently have a suggestion the user has not dismissed. Callers chunk. */
+    @Query("SELECT file_id FROM suggestion_items WHERE is_dismissed = 0 AND file_id IN (:fileIds)")
+    suspend fun getActiveFileIds(fileIds: Collection<Long>): List<Long>
+
     /** Callers keep each chunk of [fileIds] within [com.cleansweep.app.data.local.db.MAX_BIND_ARGS_PER_QUERY]. */
     @Query("UPDATE suggestion_items SET is_dismissed = :dismissed WHERE file_id IN (:fileIds)")
     suspend fun setDismissed(fileIds: Collection<Long>, dismissed: Boolean): Int

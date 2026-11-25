@@ -26,7 +26,14 @@ class TrashRepositoryImpl @Inject constructor(
 
     override fun observeTotalBytes(): Flow<Long> = trashManifestDao.observeTotalBytes()
 
+    override suspend fun getAll(): List<TrashEntry> = trashManifestDao.getAll().map { it.toDomain() }
+
+    override suspend fun getByIds(ids: Collection<Long>): List<TrashEntry> =
+        ids.distinct().chunked(MAX_BIND_ARGS_PER_QUERY).flatMap { trashManifestDao.getByIds(it) }.map { it.toDomain() }
+
     override suspend fun getById(id: Long): TrashEntry? = trashManifestDao.getById(id)?.toDomain()
+
+    override suspend fun count(): Int = trashManifestDao.count()
 
     override suspend fun getByOriginalPath(originalPath: String): TrashEntry? =
         trashManifestDao.getByOriginalPath(originalPath)?.toDomain()

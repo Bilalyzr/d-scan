@@ -14,6 +14,9 @@ interface WhitelistRepository {
     /** Newest rule first. */
     fun observeRules(): Flow<List<WhitelistRule>>
 
+    /** Every rule at once, for a check that needs them only once. */
+    suspend fun getRules(): List<WhitelistRule>
+
     fun observeRuleCount(): Flow<Int>
 
     /**

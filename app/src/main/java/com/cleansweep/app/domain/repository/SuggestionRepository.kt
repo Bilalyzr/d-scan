@@ -45,5 +45,8 @@ interface SuggestionRepository {
 
     suspend fun deleteForFiles(fileIds: Collection<Long>)
 
+    /** Of [fileIds], the ones that currently have a suggestion the user has not dismissed. */
+    suspend fun getActiveFileIds(fileIds: Collection<Long>): Set<Long>
+
     suspend fun clearSuggestions()
 }

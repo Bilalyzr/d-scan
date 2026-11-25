@@ -25,6 +25,16 @@ interface TrashManifestDao {
     @Query("SELECT * FROM trash_manifest WHERE original_path = :originalPath LIMIT 1")
     suspend fun getByOriginalPath(originalPath: String): TrashManifestEntity?
 
+    @Query("SELECT * FROM trash_manifest")
+    suspend fun getAll(): List<TrashManifestEntity>
+
+    /** Callers keep each chunk of [ids] within [com.cleansweep.app.data.local.db.MAX_BIND_ARGS_PER_QUERY]. */
+    @Query("SELECT * FROM trash_manifest WHERE id IN (:ids)")
+    suspend fun getByIds(ids: Collection<Long>): List<TrashManifestEntity>
+
+    @Query("SELECT COUNT(*) FROM trash_manifest")
+    suspend fun count(): Int
+
     /** Items whose retention window has ended and that the purge worker may delete permanently. */
     @Query("SELECT * FROM trash_manifest WHERE expires_at <= :now")
     suspend fun getExpired(now: Long): List<TrashManifestEntity>
@@ -37,7 +47,7 @@ interface TrashManifestDao {
     @Query("DELETE FROM trash_manifest WHERE id IN (:ids)")
     suspend fun deleteByIds(ids: Collection<Long>): Int
 
-    /** Used by "Empty Trash" only, after the trash directory itself has been wiped. */
+    /** Clears the manifest without looking at storage. The trash manager never calls this: it forgets each entry only once its file is gone. */
     @Query("DELETE FROM trash_manifest")
     suspend fun deleteAll(): Int
 }

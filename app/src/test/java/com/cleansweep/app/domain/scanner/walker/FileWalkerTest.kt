@@ -5,6 +5,7 @@ import com.cleansweep.app.domain.model.FileCategory
 import com.cleansweep.app.domain.model.IndexedFile
 import com.cleansweep.app.domain.model.WhitelistMatcher
 import com.cleansweep.app.domain.scanner.PauseGate
+import com.cleansweep.app.domain.scanner.trash.TrashNaming
 import com.cleansweep.app.domain.util.StoragePaths
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -211,6 +212,19 @@ class FileWalkerTest {
         assertEquals(1, result.unreadableRoots)
         assertEquals(listOf(root), result.rootsWalked)
         assertEquals(listOf("here/a.bin".at()), sink.files.map { it.path })
+    }
+
+    @Test
+    fun `entries of Safe Trash are skipped, but they keep their folder from looking empty`() = runBlocking {
+        write("Download/notes.log")
+        write("Download/${TrashNaming.trashedName("0123456789abcdef", "photo.jpg")}", ByteArray(50))
+        folder("Pictures/${TrashNaming.trashedName("0123456789abcdef", "Old")}")
+
+        val (result, sink) = walk()
+
+        assertEquals(listOf("Download/notes.log".at()), sink.files.map { it.path })
+        assertEquals(1L, result.filesSeen)
+        assertEquals("a folder that holds only a trashed entry is not empty", emptyList<IndexedFile>(), result.emptyFolders)
     }
 
     @Test

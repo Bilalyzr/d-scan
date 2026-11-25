@@ -69,6 +69,12 @@ class SuggestionRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun getActiveFileIds(fileIds: Collection<Long>): Set<Long> =
+        fileIds.distinct()
+            .chunked(MAX_BIND_ARGS_PER_QUERY)
+            .flatMap { suggestionItemDao.getActiveFileIds(it) }
+            .toSet()
+
     override suspend fun clearSuggestions() {
         suggestionItemDao.deleteAll()
     }

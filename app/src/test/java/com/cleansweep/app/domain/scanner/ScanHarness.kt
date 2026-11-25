@@ -46,6 +46,11 @@ internal class SteppingClock(
     override fun instant(): Instant = Instant.ofEpochMilli(millis())
 
     override fun millis(): Long = now++
+
+    /** Moves the clock forward, the way days go by while nothing is read. */
+    fun advanceBy(millis: Long) {
+        now += millis
+    }
 }
 
 /** [FileHasher] that records which files it was asked about, and can be held up or made to act. */

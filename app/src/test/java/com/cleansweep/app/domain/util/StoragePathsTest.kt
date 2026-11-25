@@ -2,6 +2,7 @@ package com.cleansweep.app.domain.util
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeNoException
@@ -62,5 +63,22 @@ class StoragePathsTest {
 
         val filesystemRoot = "/"
         assertTrue(StoragePaths.isSameOrDescendant("/storage/emulated/0/Download", filesystemRoot))
+    }
+
+    @Test
+    fun `a path is split into its folder and its own name`() {
+        assertEquals("notes.pdf", StoragePaths.nameOf("/storage/emulated/0/Documents/notes.pdf"))
+        assertEquals("/storage/emulated/0/Documents", StoragePaths.parentOf("/storage/emulated/0/Documents/notes.pdf"))
+        assertEquals("/storage/emulated/0", StoragePaths.parentOf("/storage/emulated/0/Documents"))
+        assertEquals("/", StoragePaths.parentOf("/storage"))
+        assertNull(StoragePaths.parentOf("notes.pdf"))
+        assertEquals("", StoragePaths.nameOf("/"))
+    }
+
+    @Test
+    fun `joining adds exactly one separator`() {
+        assertEquals("/a/b/c.txt", StoragePaths.join("/a/b", "c.txt"))
+        assertEquals("/c.txt", StoragePaths.join("/", "c.txt"))
+        assertEquals("/a/b/c.txt", StoragePaths.join("/a/b/", "c.txt"))
     }
 }

@@ -55,6 +55,15 @@ class SuggestionGuardTest {
     }
 
     @Test
+    fun `an entry that lies in Safe Trash is never suggested, whatever a detector says`() {
+        val inTrash = ".cleansweep-trashed-0123456789abcdef-notes.log"
+
+        assertEquals(Rejection.IN_TRASH, rejection(inTrash, SuggestionCategory.TEMP_FILE))
+        assertEquals(Rejection.IN_TRASH, rejection("/r/Download/$inTrash", SuggestionCategory.EXACT_DUPLICATE))
+        assertNull(rejection("/r/Download/notes.log", SuggestionCategory.TEMP_FILE))
+    }
+
+    @Test
     fun `an entry with several links to its content is never suggested`() {
         assertEquals(Rejection.HARD_LINKED, rejection("/r/Documents/shared.pdf", SuggestionCategory.EXACT_DUPLICATE, linkCount = 2))
         assertNull(rejection("/r/Documents/shared.pdf", SuggestionCategory.EXACT_DUPLICATE, linkCount = 1))

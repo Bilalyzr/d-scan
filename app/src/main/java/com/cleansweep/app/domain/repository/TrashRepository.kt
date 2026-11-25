@@ -19,7 +19,16 @@ interface TrashRepository {
     /** Bytes currently held in Safe Trash. */
     fun observeTotalBytes(): Flow<Long>
 
+    /** Every entry, whatever its age. Used by "Empty Trash". */
+    suspend fun getAll(): List<TrashEntry>
+
+    /** Callers chunk [ids]; nothing is returned for ids that do not exist. */
+    suspend fun getByIds(ids: Collection<Long>): List<TrashEntry>
+
     suspend fun getById(id: Long): TrashEntry?
+
+    /** How many entries the manifest holds right now. */
+    suspend fun count(): Int
 
     suspend fun getByOriginalPath(originalPath: String): TrashEntry?
 
@@ -35,6 +44,6 @@ interface TrashRepository {
     /** Removes entries after they were restored or purged. This never touches files on disk. */
     suspend fun removeByIds(ids: Collection<Long>)
 
-    /** Empties the manifest. Only valid after the trash directory itself has been wiped. */
+    /** Empties the manifest without looking at storage. The trash manager never does this: see [removeByIds]. */
     suspend fun clearManifest()
 }

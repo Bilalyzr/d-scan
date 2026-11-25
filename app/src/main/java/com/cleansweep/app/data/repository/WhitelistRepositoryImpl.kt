@@ -53,6 +53,9 @@ class WhitelistRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun getRules(): List<WhitelistRule> =
+        whitelistRuleDao.getAll().sortedByDescending { it.createdAt }.map { it.toDomain() }
+
     override suspend fun removeRule(id: Long) {
         whitelistRuleDao.deleteById(id)
     }

@@ -4,6 +4,7 @@ import com.cleansweep.app.domain.model.FileCategory
 import com.cleansweep.app.domain.model.IndexedFile
 import com.cleansweep.app.domain.model.WhitelistMatcher
 import com.cleansweep.app.domain.scanner.PauseGate
+import com.cleansweep.app.domain.scanner.trash.TrashNaming
 import com.cleansweep.app.domain.util.StoragePaths
 import kotlinx.coroutines.ensureActive
 import java.io.File
@@ -151,6 +152,15 @@ class FileWalker(
             }
 
             val child = children.next()
+
+            // An entry of Safe Trash rests where the user deleted it, under a hidden name. It is not the
+            // user's storage any more, so it is not indexed. It still counts as content of its folder: moving
+            // that folder to the trash would carry trashed entries along and cut them off from the manifest.
+            if (TrashNaming.isTrashedName(child.name)) {
+                frame.hasContent = true
+                continue
+            }
+
             val childPath = frame.path + "/" + child.name
 
             // Protected content is pruned, and it counts as content: a folder holding only a whitelisted

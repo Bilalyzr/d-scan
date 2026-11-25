@@ -22,7 +22,8 @@ object TrashPolicy {
  * The manifest is written before a file is moved, so a crash can never leave an untracked file in the trash.
  *
  * @property originalPath Canonical path the item was moved from; also where a restore puts it back.
- * @property trashPath Absolute path of the item inside the app-private trash directory.
+ * @property trashPath Where the item rests while trashed: its own folder, under the hidden name that
+     *   `TrashNaming` gives it. See [com.cleansweep.app.domain.scanner.trash.TrashNaming].
  * @property deletedAt When the item was moved to the trash, in epoch millis.
  * @property expiresAt When the item is purged permanently: [deletedAt] + [TrashPolicy.RETENTION_DAYS].
  */
